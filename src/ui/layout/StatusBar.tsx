@@ -1,7 +1,8 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 import { useMemo } from 'react';
 import { useResults } from '@/state/results';
 import { useProject } from '@/state/project';
-import { cutLength } from '@/core/parts';
+import { estimate } from '@/core/manufacturing/manufacturing';
 import { useUnits } from '../components/controls';
 
 /** Live numbers that prove the build: parts, sheets, pins, cut length, cost. */
@@ -11,12 +12,11 @@ export function StatusBar() {
   const u = useUnits();
   const stats = useMemo(() => {
     const parts = r.method?.parts ?? [];
-    let cut = 0;
-    for (const pt of parts) cut += cutLength(pt);
+    const e = estimate(parts, p);
     const sheets = r.nest?.sheets.length ?? 0;
-    const minutes = cut / Math.max(1, p.material.cutSpeed) / 60;
-    return { parts: parts.length, sheets, cut, minutes, cost: sheets * p.material.pricePerSheet, pins: r.method?.connectorData?.pinCount ?? 0 };
-  }, [r.method, r.nest, p.material.cutSpeed, p.material.pricePerSheet]);
+    return { parts: parts.length, sheets, cut: e.cutLength, minutes: e.minutes, weight: e.weight, cost: sheets * p.material.pricePerSheet, pins: r.method?.connectorData?.pinCount ?? 0 };
+  }, [r.method, r.nest, p]);
+  const process = p.manufacturing.process;
   const tris = r.surface ? r.surface.indices.length / 3 : 0;
   const warnCount = r.warnings.length + (r.method?.warnings.length ?? 0) + (r.nest?.unplaced.length ? 1 : 0);
   return (
@@ -25,10 +25,11 @@ export function StatusBar() {
         <Stat k="Triangles" v={tris.toLocaleString()} />
         <Stat k="Parts" v={stats.parts.toLocaleString()} />
         {stats.pins > 0 && <Stat k={p.method === 'slices' ? 'Dowels' : 'Pins'} v={stats.pins.toLocaleString()} />}
-        <Stat k="Sheets" v={String(stats.sheets)} />
-        <Stat k="Cut length" v={stats.cut > 10000 ? `${(stats.cut / 1000).toFixed(1)} m` : u.fmt(stats.cut, 0)} />
-        <Stat k="Cut time" v={`≈ ${stats.minutes < 60 ? `${Math.round(stats.minutes)} min` : `${(stats.minutes / 60).toFixed(1)} h`}`} />
-        <Stat k="Material" v={`≈ ${stats.cost.toFixed(0)}`} />
+        <Stat k={process === 'print3d' ? 'Plates' : 'Sheets'} v={String(stats.sheets)} />
+        {process !== 'print3d' && <Stat k="Cut length" v={stats.cut > 10000 ? `${(stats.cut / 1000).toFixed(1)} m` : u.fmt(stats.cut, 0)} />}
+        <Stat k={process === 'print3d' ? 'Print time' : process === 'cnc' ? 'Router time' : 'Cut time'} v={`≈ ${stats.minutes < 60 ? `${Math.round(stats.minutes)} min` : `${(stats.minutes / 60).toFixed(1)} h`}`} />
+        <Stat k="Weight" v={`≈ ${stats.weight >= 1000 ? `${(stats.weight / 1000).toFixed(2)} kg` : `${Math.round(stats.weight)} g`}`} />
+        {process !== 'print3d' && <Stat k="Material" v={`≈ ${stats.cost.toFixed(0)}`} />}
         {warnCount > 0 && <Stat k="Warnings" v={String(warnCount)} tone="warn" />}
       </dl>
       <div className="status__engine">

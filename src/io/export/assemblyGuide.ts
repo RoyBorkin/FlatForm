@@ -1,8 +1,12 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 /**
  * Assembly guide PDF: cover render, how-to steps for the chosen method, every
  * sheet with its part labels, and a catalogue page for each part showing its
  * flat outline next to a render that highlights where it goes.
  */
+import { APP_NAME, AUTHOR, AUTHOR_EMAIL, AUTHOR_URL, COPYRIGHT, COPYRIGHT_LINE } from '@/brand';
+import { METHOD_NAME, PROCESS_LABEL } from '@/ui/labels';
+import { estimate } from '@/core/manufacturing/manufacturing';
 import { jsPDF } from 'jspdf';
 import {
   AmbientLight,
@@ -201,7 +205,7 @@ export async function buildAssemblyGuide(onProgress?: (f: number) => void): Prom
   if (!r.method || !r.nest) throw new Error('Nothing to document yet.');
   const method = r.method;
   const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape', compress: true });
-  doc.setProperties({ title: `${p.name} · assembly guide`, creator: 'Sheetform' });
+  doc.setProperties({ title: `${p.name} · assembly guide`, creator: APP_NAME, author: `${AUTHOR} (${AUTHOR_EMAIL})`, subject: COPYRIGHT_LINE, keywords: 'FlatForm, assembly guide' });
   const W = 297, H = 210, M = 14;
   const geoms = partGeometries(method);
   const R = new Renderer(geoms, 960, 720);
@@ -215,13 +219,14 @@ export async function buildAssemblyGuide(onProgress?: (f: number) => void): Prom
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
   doc.setTextColor(90);
-  doc.text('Assembly guide · made with Sheetform', M, M + 15);
+  doc.text('Assembly guide · made with FlatForm', M, M + 15);
   const cover = R.shot(null, '', (id) => groupColor(byId.get(id) ?? method.parts[0]));
   R.resize(400, 300); // part locators are small; keep them cheap
   doc.addImage(cover, 'JPEG', M, M + 22, 160, 120);
   const totalCut = method.parts.reduce((s, x) => s + cutLength(x), 0);
   const facts: [string, string][] = [
-    ['Method', p.method],
+    ['Method', METHOD_NAME[p.method]],
+    ['Making', PROCESS_LABEL[p.manufacturing.process]],
     ['Material', `${p.material.name}`],
     ['Thickness', `${p.material.thickness} mm`],
     ['Sheet', `${p.sheet.width} × ${p.sheet.height} mm`],
@@ -230,6 +235,10 @@ export async function buildAssemblyGuide(onProgress?: (f: number) => void): Prom
     ['Hole diameter', pinHoleDiameter(p.joinery) ? `${pinHoleDiameter(p.joinery).toFixed(2)} mm` : '—'],
     ['Connectors', String(method.connectorData?.pinCount ?? 0)],
     ['Total cut length', `${(totalCut / 1000).toFixed(1)} m`],
+    ['Weight', (() => {
+      const g = estimate(method.parts, p).weight;
+      return g >= 1000 ? `${(g / 1000).toFixed(2)} kg` : `${Math.round(g)} g`;
+    })()],
   ];
   doc.setTextColor(30);
   facts.forEach(([k, v], i) => {
@@ -330,5 +339,15 @@ export async function buildAssemblyGuide(onProgress?: (f: number) => void): Prom
     await new Promise((res) => setTimeout(res, 0)); // keep the UI responsive
   }
   R.dispose();
+  // Footer with authorship on every page.
+  const pages = doc.getNumberOfPages();
+  for (let i = 1; i <= pages; i++) {
+    doc.setPage(i);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(140);
+    doc.text(`${COPYRIGHT} · ${AUTHOR_EMAIL} · ${AUTHOR_URL}`, M, H - 6);
+    doc.text(`${i} / ${pages}`, W - M, H - 6, { align: 'right' });
+  }
   return doc.output('blob');
 }

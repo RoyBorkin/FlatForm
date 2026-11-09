@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 import { Lock, LockOpen, Plus, Trash2 } from 'lucide-react';
 import { useMemo } from 'react';
 import { useProject } from '@/state/project';

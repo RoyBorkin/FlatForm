@@ -1,3 +1,5 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+import { APP_NAME, AUTHOR, AUTHOR_EMAIL, AUTHOR_URL, COPYRIGHT, COPYRIGHT_LINE } from '@/brand';
 /** 3D exports: STL (binary), OBJ, GLB and 3MF. Z is up, units are mm. */
 import { BufferGeometry, Group, Matrix4, Mesh, MeshStandardMaterial, Object3D } from 'three';
 import { zipSync, strToU8 } from 'fflate';
@@ -20,11 +22,14 @@ export async function exportModel(root: Object3D, format: ModelFormat): Promise<
     case 'stl': {
       const { STLExporter } = await import('three/examples/jsm/exporters/STLExporter.js');
       const data = new STLExporter().parse(root, { binary: true }) as unknown as DataView;
+      // The 80-byte binary STL header is free text: put the credit there.
+      const head = new TextEncoder().encode(`${APP_NAME} ${COPYRIGHT} ${AUTHOR_URL}`.slice(0, 80));
+      new Uint8Array(data.buffer, data.byteOffset, 80).set(head);
       return new Blob([data.buffer as ArrayBuffer], { type: 'model/stl' });
     }
     case 'obj': {
       const { OBJExporter } = await import('three/examples/jsm/exporters/OBJExporter.js');
-      return new Blob([`# Sheetform export, units mm, Z up\n${new OBJExporter().parse(root)}`], { type: 'model/obj' });
+      return new Blob([`# ${COPYRIGHT_LINE}\n# units mm, Z up\n${new OBJExporter().parse(root)}`], { type: 'model/obj' });
     }
     case 'glb': {
       const { GLTFExporter } = await import('three/examples/jsm/exporters/GLTFExporter.js');
@@ -33,6 +38,7 @@ export async function exportModel(root: Object3D, format: ModelFormat): Promise<
       wrapper.rotation.x = -Math.PI / 2;
       wrapper.add(root.clone());
       wrapper.scale.setScalar(0.001); // glTF units are metres
+      wrapper.userData = { copyright: COPYRIGHT_LINE };
       const buf = (await new GLTFExporter().parseAsync(wrapper, { binary: true })) as ArrayBuffer;
       return new Blob([buf], { type: 'model/gltf-binary' });
     }
@@ -66,7 +72,9 @@ function threeMf(root: Object3D): Blob {
   });
   const model = `<?xml version="1.0" encoding="UTF-8"?>
 <model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">
-<metadata name="Application">Sheetform</metadata>
+<metadata name="Application">${APP_NAME}</metadata>
+<metadata name="Designer">${AUTHOR}</metadata>
+<metadata name="Copyright">${COPYRIGHT} · ${AUTHOR_EMAIL} · ${AUTHOR_URL}</metadata>
 <resources>${objects.join('')}</resources>
 <build>${items.join('')}</build>
 </model>`;

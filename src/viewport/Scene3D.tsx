@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 import { Canvas, useThree, type ThreeEvent } from '@react-three/fiber';
 import { OrbitControls, Grid, GizmoHelper, GizmoViewport } from '@react-three/drei';
 import { useEffect, useMemo, useRef } from 'react';
@@ -14,6 +15,7 @@ import {
   Object3D,
   PMREMGenerator,
   PerspectiveCamera,
+  Quaternion,
   Vector3,
 } from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
@@ -21,7 +23,8 @@ import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { useResults } from '@/state/results';
 import { useUI, useLayerColors } from '@/state/ui';
 import { useProject } from '@/state/project';
-import { meshDataToGeometry, partExtrusion, pinMatrices, stripMatrices, unitBox, unitDisc, unitPin, panelsGeometry } from './geometry';
+import { meshDataToGeometry, partExtrusion, pinMatrices, stripMatrices, unitBox, unitDisc, unitPin, panelsGeometry, spacerGeometry } from './geometry';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { layerMaterial, stockMaterial } from './materials';
 import { SkeletonEditor3D } from './SkeletonEditor3D';
 import { SculptLayer } from './Sculpt';
@@ -166,6 +169,7 @@ function Content() {
       {step === 'surface' && r.surface && <SurfaceView mesh={r.surface} wire={ov.wire} method={null} clusters={false} />}
       {!early && r.surface && ov.base && <SurfaceView mesh={r.surface} wire={false} ghost method={r.method} clusters={ov.clusters && step === 'method'} />}
       {!early && r.method && ov.maze && step === 'method' && <MazeLines method={r.method} />}
+      {!early && r.method?.overlays.guide && step === 'method' && <GuideLine data={r.method.overlays.guide} />}
       {!early && r.method && ov.parts && <Assembly method={r.method} />}
       {!early && r.method?.assembly.pins && ov.pins && <Pins method={r.method} />}
     </group>
@@ -251,6 +255,19 @@ function MazeLines({ method }: { method: MethodResult }) {
         </lineSegments>
       ))}
     </group>
+  );
+}
+
+/** The guide curve of layers and classic models, drawn through the shape. */
+function GuideLine({ data }: { data: Float32Array }) {
+  const color = useCssVar('--layer-2');
+  return (
+    <lineSegments renderOrder={3}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[data, 3]} />
+      </bufferGeometry>
+      <lineBasicMaterial color={color || '#faaf40'} transparent opacity={0.95} depthTest={false} />
+    </lineSegments>
   );
 }
 
@@ -406,49 +423,120 @@ function Instanced({
   );
 }
 
+/**
+ * Flat parts placed in 3D. Parts are merged into one mesh per group (hundreds
+ * of bars or ribs stay a handful of draw calls); a triangle → part table keeps
+ * picking exact, and the selected part is drawn on top in the accent colour.
+ */
 function PlanarView({ method }: { method: MethodResult }) {
   const matFor = useMaterialFor();
   const selected = useUI((s) => s.selectedPart);
   const hidden = useUI((s) => s.overlays.hiddenGroups);
   const accent = useCssVar('--accent');
-  const meshes = useMemo(
-    () =>
-      method.parts
-        .map((p) => {
-          if (!p.planar) return null;
-          const g = partExtrusion(p, method.assembly.thickness);
-          if (!g) return null;
-          g.applyMatrix4(new Matrix4().fromArray(p.planar.matrix));
-          return { id: p.id, group: p.group, g };
-        })
-        .filter((x): x is NonNullable<typeof x> => !!x),
-    [method],
+  const built = useMemo(() => {
+    const byGroup = new Map<number, { geos: BufferGeometry[]; ids: string[]; triEnd: number[] }>();
+    const single = new Map<string, BufferGeometry>();
+    for (const p of method.parts) {
+      if (!p.planar) continue;
+      const g = partExtrusion(p, method.assembly.thickness);
+      if (!g) continue;
+      g.applyMatrix4(new Matrix4().fromArray(p.planar.matrix));
+      const flat = g.index ? g.toNonIndexed() : g;
+      if (flat !== g) g.dispose();
+      for (const name of Object.keys(flat.attributes)) if (name !== 'position' && name !== 'normal') flat.deleteAttribute(name);
+      single.set(p.id, flat);
+      if (!byGroup.has(p.group)) byGroup.set(p.group, { geos: [], ids: [], triEnd: [] });
+      const G = byGroup.get(p.group)!;
+      const prev = G.triEnd.length ? G.triEnd[G.triEnd.length - 1] : 0;
+      G.geos.push(flat);
+      G.ids.push(p.id);
+      G.triEnd.push(prev + flat.getAttribute('position').count / 3);
+    }
+    const groups = [...byGroup.entries()].map(([group, G]) => ({ group, geo: mergeGeometries(G.geos, false), ids: G.ids, triEnd: G.triEnd }));
+    return { groups, single };
+  }, [method]);
+  useEffect(
+    () => () => {
+      built.groups.forEach((g) => g.geo?.dispose());
+      built.single.forEach((g) => g.dispose());
+    },
+    [built],
   );
-  useEffect(() => () => meshes.forEach((m) => m.g.dispose()), [meshes]);
-  const hi = useMemo(() => new MeshStandardMaterial({ color: accent, roughness: 0.45 }), [accent]);
+  const hi = useMemo(() => new MeshStandardMaterial({ color: accent, roughness: 0.45, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }), [accent]);
+  const partAt = (G: (typeof built.groups)[number], faceIndex: number | undefined) => {
+    if (faceIndex == null) return null;
+    let lo = 0, hi2 = G.triEnd.length - 1;
+    while (lo < hi2) {
+      const mid = (lo + hi2) >> 1;
+      if (G.triEnd[mid] > faceIndex) hi2 = mid;
+      else lo = mid + 1;
+    }
+    return G.ids[lo] ?? null;
+  };
+  const sel = selected ? built.single.get(selected) : undefined;
   return (
     <group>
-      {meshes.map((m) =>
-        hidden.includes(m.group) ? null : (
+      {built.groups.map((G) =>
+        hidden.includes(G.group) || !G.geo ? null : (
           <mesh
-            key={m.id}
-            geometry={m.g}
-            material={selected === m.id ? hi : matFor(m.group)}
+            key={G.group}
+            geometry={G.geo}
+            material={matFor(G.group)}
             castShadow
             receiveShadow
             onClick={(e) => {
               e.stopPropagation();
-              useUI.getState().set({ selectedPart: m.id });
+              useUI.getState().set({ selectedPart: partAt(G, e.faceIndex ?? undefined) });
             }}
-            onPointerOver={(e) => {
+            onPointerMove={(e) => {
               e.stopPropagation();
-              useUI.getState().set({ hoveredPart: m.id });
+              const id = partAt(G, e.faceIndex ?? undefined);
+              if (useUI.getState().hoveredPart !== id) useUI.getState().set({ hoveredPart: id });
             }}
             onPointerOut={() => useUI.getState().set({ hoveredPart: null })}
           />
         ),
       )}
+      {sel && <mesh geometry={sel} material={hi} />}
+      {method.assembly.spacers && <Spacers spacers={method.assembly.spacers} />}
     </group>
+  );
+}
+
+/** Printed layer spacers, instanced along each rod. */
+function Spacers({ spacers }: { spacers: NonNullable<MethodResult['assembly']['spacers']> }) {
+  const ref = useRef<InstancedMesh>(null);
+  const invalidate = useThree((st) => st.invalidate);
+  const geo = useMemo(() => spacerGeometry(spacers.shape, spacers.size), [spacers.shape, spacers.size]);
+  const mats = useMemo(() => {
+    const out: Matrix4[] = [];
+    const d = spacers.data;
+    const a = new Vector3(), b = new Vector3(), dir = new Vector3(), up = new Vector3(0, 0, 1);
+    const q = new Quaternion();
+    for (let i = 0; i + 5 < d.length; i += 6) {
+      a.set(d[i], d[i + 1], d[i + 2]);
+      b.set(d[i + 3], d[i + 4], d[i + 5]);
+      dir.subVectors(b, a);
+      const len = dir.length();
+      if (len < 1e-6) continue;
+      q.setFromUnitVectors(up, dir.normalize());
+      out.push(new Matrix4().compose(a.clone(), q.clone(), new Vector3(1, 1, len)));
+    }
+    return out;
+  }, [spacers.data]);
+  useEffect(() => {
+    const m = ref.current;
+    if (!m) return;
+    mats.forEach((x, i) => m.setMatrixAt(i, x));
+    m.instanceMatrix.needsUpdate = true;
+    m.computeBoundingSphere();
+    invalidate();
+  }, [mats, invalidate]);
+  useEffect(() => () => geo.dispose(), [geo]);
+  return (
+    <instancedMesh ref={ref} args={[geo, undefined, mats.length]} castShadow>
+      <meshStandardMaterial color="#faaf40" roughness={0.55} metalness={0.05} />
+    </instancedMesh>
   );
 }
 

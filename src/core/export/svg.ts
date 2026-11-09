@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 /**
  * SVG at 1:1 scale (mm). Layers are groups named for Inkscape/Illustrator and
  * coloured the way LightBurn and most laser software map operations:
@@ -17,7 +18,7 @@ export function svgPath(p: Path2, closed: boolean, H: number): string {
 
 export const SVG_COLORS = { cut: '#ff0000', inner: '#ff00ff', engrave: '#0000ff', score: '#00a000', sheet: '#999999' };
 
-export function writeSvg(s: SheetDrawing, stroke: number, frame: boolean, title = ''): string {
+export function writeSvg(s: SheetDrawing, stroke: number, frame: boolean, title = '', credit = ''): string {
   const H = s.height;
   const g = (id: string, color: string, body: string, extra = '') =>
     `<g id="${id}" inkscape:groupmode="layer" inkscape:label="${id}" fill="none" stroke="${color}" stroke-width="${stroke}" ${extra}>${body}</g>`;
@@ -27,12 +28,12 @@ export function writeSvg(s: SheetDrawing, stroke: number, frame: boolean, title 
   const valley = s.score.filter((x) => x.kind === 'valley').map((x) => x.pts);
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="${f(s.width)}mm" height="${f(H)}mm" viewBox="0 0 ${f(s.width)} ${f(H)}">
-<title>${escapeXml(title || `Sheet ${s.index + 1}`)}</title>
+<title>${escapeXml(title || `Sheet ${s.index + 1}`)}</title>${credit ? `\n<desc>${escapeXml(credit)}</desc>\n<metadata><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dc="http://purl.org/dc/elements/1.1/"><rdf:Description><dc:creator>${escapeXml(credit)}</dc:creator><dc:rights>${escapeXml(credit)}</dc:rights></rdf:Description></rdf:RDF></metadata>` : ''}
 ${frame ? g('SHEET', SVG_COLORS.sheet, `<rect x="0" y="0" width="${f(s.width)}" height="${f(H)}"/>`) : ''}
 ${g('ENGRAVE', SVG_COLORS.engrave, paths(s.engrave, false))}
 ${g('SCORE', SVG_COLORS.score, paths(mountain, false) + (valley.length ? `<path stroke-dasharray="2 1" d="${valley.map((p) => svgPath(p, false, H)).join('')}"/>` : ''))}
 ${g('CUT_INNER', SVG_COLORS.inner, circles + paths(s.perforations, false) + paths(s.cutInner, true))}
-${g('CUT_OUTER', SVG_COLORS.cut, paths(s.cutOuter, true))}
+${g('CUT_OUTER', SVG_COLORS.cut, paths(s.cutOuter, true) + paths(s.cutOuterOpen, false))}
 </svg>
 `;
 }

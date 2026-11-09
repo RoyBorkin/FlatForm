@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 /**
  * Nesting. Two strategies:
  *  - fast: MaxRects (best short side fit) on minimum-area bounding boxes.

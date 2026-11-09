@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 import type { MeshData } from '../types';
 import { cross3, getV, norm3, sub3, type V3 } from '../math/vec';
 

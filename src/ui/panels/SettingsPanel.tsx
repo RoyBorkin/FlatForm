@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 import { RotateCcw, Moon, Sun, Monitor } from 'lucide-react';
 import { useProject } from '@/state/project';
 import { useUI } from '@/state/ui';
@@ -5,6 +6,7 @@ import { WORLDS, worldById, type WorldId } from '@/themes/themes';
 import { GROUP_LETTERS } from '@/core/parts';
 import { Button, ColorInput, Section, Segmented, SegmentedField, SwitchField } from '../components/controls';
 import { isDesktop } from '@/platform/save';
+import { APP_NAME, AUTHOR_EMAIL, AUTHOR_URL, COPYRIGHT } from '@/brand';
 
 export function SettingsPanel() {
   const settings = useUI((s) => s.settings);
@@ -71,7 +73,7 @@ export function SettingsPanel() {
           </Button>
         }
       >
-        <p className="muted small">Used for lattice layers, waffle rib families and part groups, in the 3D view, on the sheets and in exported guides. Each style keeps its own set.</p>
+        <p className="muted small">Used for lattice layers, rib and profile families, bar and triangle types and other part groups, in the 3D view, on the sheets and in exported guides. Each style keeps its own set.</p>
         <div className="color-list">
           {colors.map((c, i) => (
             <div className="color-row" key={i}>
@@ -93,11 +95,14 @@ export function SettingsPanel() {
       <Section title="Units & behaviour">
         <SegmentedField
           label="Units"
+          hint="How lengths are shown and typed. Files and exports stay in millimetres, the cutting standard."
           value={units}
           onChange={(v) => update((p) => void (p.units = v))}
           options={[
-            { value: 'mm', label: 'Millimetres' },
-            { value: 'in', label: 'Inches' },
+            { value: 'mm', label: 'mm' },
+            { value: 'cm', label: 'cm' },
+            { value: 'm', label: 'm' },
+            { value: 'in', label: 'inch' },
           ]}
         />
         <SwitchField label="Recompute automatically" hint="Off: changes wait until you press Update in the status bar." checked={settings.autoCompute} onChange={(v) => setSettings((s) => void (s.autoCompute = v))} />
@@ -105,9 +110,19 @@ export function SettingsPanel() {
         <SwitchField label="Shadows" checked={settings.showShadows} onChange={(v) => setSettings((s) => void (s.showShadows = v))} />
       </Section>
       <Section title="About" defaultOpen={false}>
-        <p className="muted small">
-          Sheetform {__APP_VERSION__} · {isDesktop() ? 'desktop' : 'web'} · MIT licence. Geometry runs locally on your machine; nothing is uploaded.
-        </p>
+        <div className="about">
+          <p className="about__name">
+            {APP_NAME} <span className="muted">{__APP_VERSION__} · {isDesktop() ? 'desktop' : 'web'}</span>
+          </p>
+          <p className="small">
+            {COPYRIGHT} ·{' '}
+            <a href={`mailto:${AUTHOR_EMAIL}`}>{AUTHOR_EMAIL}</a> ·{' '}
+            <a href={AUTHOR_URL} target="_blank" rel="noreferrer">
+              {AUTHOR_URL.replace(/^https:\/\//, '').replace(/\/$/, '')}
+            </a>
+          </p>
+          <p className="muted small">MIT licence. Geometry runs locally on your machine; nothing is uploaded.</p>
+        </div>
         <p className="muted small">Shortcuts: Ctrl/⌘ Z undo, Ctrl/⌘ Shift Z redo, Ctrl/⌘ S save, Ctrl/⌘ O open, 1–7 jump to a step, F frame the view.</p>
       </Section>
     </>

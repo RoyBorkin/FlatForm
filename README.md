@@ -1,21 +1,26 @@
+<!-- FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT -->
 <p align="center">
   <img src="docs/app-icon.png" width="96" alt="" />
 </p>
 
-<h1 align="center">Sheetform</h1>
+<h1 align="center">FlatForm</h1>
 
 <p align="center">
-  Turn any 3D shape into flat sheet parts you can laser-cut, CNC-cut, number and assemble.<br/>
+  Turn any 3D shape into flat sheet parts you can laser-cut, CNC-route or 3D-print, number and assemble.<br/>
   Runs in the browser, and as a desktop app for Windows and macOS.
+</p>
+
+<p align="center">
+  © 2026 <a href="https://royborkin.github.io/">Roy Borkin</a> · <a href="mailto:royborkin@gmail.com">royborkin@gmail.com</a>
 </p>
 
 <p align="center">
   <img src="docs/screenshot-3d.jpg" alt="A table base rebuilt from two layers of laser-cut branching strips, shown in 3D" />
 </p>
 
-Sheetform takes a shape — modelled in the app or imported — and rebuilds it from parts cut out of flat sheet material. It produces the cut file, the flat parts, the assembled 3D model, a parts list, an assembly guide and printable connectors. Every step of the process has its own controls.
+FlatForm takes a shape — modelled in the app or imported — and rebuilds it from parts cut out of flat sheet material. It produces the cut file, the flat parts, the assembled 3D model, a parts list, an assembly guide and printable connectors. Every step of the process has its own controls.
 
-It started from the "organic shape to fabrication" workflow, usually built as a large Grasshopper definition (SubD → Kangaroo → clusters → Kruskal maze → strips → pinned layers → unroll → nest), and makes it a standalone tool with three more construction methods.
+It started from the "organic shape to fabrication" workflow, usually built as a large Grasshopper definition (SubD → Kangaroo → clusters → Kruskal maze → strips → pinned layers → unroll → nest), and makes it a standalone tool with **eleven construction methods**, **seven kinds of joinery** and three ways of making the parts.
 
 ## Features
 
@@ -30,48 +35,68 @@ It started from the "organic shape to fabrication" workflow, usually built as a 
 - **Isotropic remeshing** to a target triangle count (split, collapse, flip, tangential relax, project).
 - **Relax**: *minimal surface* (soap film between the open rims, like Kangaroo) or *smooth* (Taubin, no shrinking).
 
-**Four construction methods**
+**Eleven construction methods**, in four families
 
-| Method | What you get | Joinery |
+| Family | Method | What you get |
 |---|---|---|
-| **Branching lattice** | The surface is split into clusters, and a maze (spanning tree) grows inside each one. Each maze becomes one strip part. Two or more layers with different clusters are pinned together through a numbered hole at every node. | Screws, printed pins/hubs/spacers, plain holes |
-| **Stacked slices** | Contour slices along X, Y or Z, solid or hollow. Dowel holes run through every slice, and each slice has the outline of the next one engraved on it. | Screws/rods, printed pins, plain holes |
-| **Interlocking waffle** | Two families of ribs with half-slots, fit clearance and lead-in chamfers. Each slot is labelled with its mating rib. Ribs can be hollow, keeping a post at every slot. | Slots, printed cross clips |
-| **Folded panels** | A papercraft unfold of a faceted version of the shape. Fold lines are scored (mountain/valley) or perforated, and matching cut edges are numbered. | **4 integral latches** (tab & slot, arrowhead, hook, dovetail), glue tabs, screw holes, printed angle brackets |
+| Surface | **Branching lattice** | The surface is split into clusters and a maze grows inside each one; each maze is one strip part. Two or more layers with different clusters are pinned together through a numbered hole at every node. |
+| Frames | **Mesh lines** | Every edge of the mesh becomes a flat bar, standing on edge (the matchstick-frame look) or lying flat. Bars are rounded to a length step so equal ones can be batch-cut; node hubs can be printed with arms at the real angles. |
+| Frames | **Triangles** | The surface is rebuilt from a few repeated triangle shapes: edge lengths are clustered into classes, the mesh is relaxed toward them (position-based springs projected to the surface), and each face is cut as the ideal triangle of its classes. Solid panels or open frames, with gap and corner trim. |
+| Sections | **Stacked slices** | Contour slices along X, Y or Z, solid or hollow, on dowels, with the next slice engraved on each one. |
+| Sections | **Layers** | Spaced layers in **any direction** (azimuth / tilt) or fanned **along a curve** you draw. Rods run through the longest run of layers they can; **3D-printed spacers** (round, square, hex or star, any size) hold the gaps, grouped by length. Hollow layers keep a hub and spokes around every rod. |
+| Sections | **Interlocking waffle** | Two families of ribs with half-slots, fit clearance and lead-in chamfers, each slot labelled with its mating rib. |
+| Sections | **Classic slot model** | The classic laser-cut model in three styles: **grid** (two rib families in any plane, rotatable), **revolve** (profiles fanned around the axis, sliding into open rings) and **along a curve** (ribs square to a spine curve, on one to three spines). Slots open the same way for every pair, so parts slide together. |
+| Folded | **Folded panels** | A faceted unfold; folds scored, perforated or cut as Flaticulation joints; cut edges numbered and joined. |
+| Folded | **Paper-craft** | Pepakura-style pieces with glue flaps (alternate, one side, both or none; trapezoid, rounded or triangle), mountain/valley fold lines, edge numbers and piece names. |
+| Folded | **Minimal joinery** | A few large pieces of **flexible** sheet (felt, fabric, leather, thin plastic). Each piece is flattened in one go with least-squares conformal maps, so it may stretch a little instead of being cut up; tubes and rings are split until every piece lies flat. Seams are laced. |
+| Folded | **Flex hinges** | The same few large pieces in **rigid** sheet (plywood, MDF, acrylic): every fold that bends gets a band of living-hinge slits (straight, wave or zig-zag) aligned with the bend. |
 
-Lattice controls: cell pattern (hexagonal / triangular / square / star), number of layers, clusters per layer, maze algorithm (Kruskal, Prim, backtracker, Wilson, radial), grain bias, seed, strip width, corner and end style, stack direction, pin density, engraved hole numbers and part names, and auto-splitting of parts that would overlap themselves or not fit the sheet.
+**Joinery** (each method offers the kinds that make sense for it)
+- **Screws**: ISO 273 clearance holes for M2–M6, US #4–#8 and pop rivets, close/normal/loose fit, or a custom diameter.
+- **3D printed parametric connectors** (Manifold, watertight): snap pin, **hollow screw** with an open centre, spacer (and shaped **layer spacers**), **node hub** with arms at the real angles, **angle bracket** at the real panel angle, cross clips for waffles.
+- **None**: plain holes of any diameter, or glue tabs where a method has them.
+- **Folding latches**: tab & slot, arrowhead, hook and dovetail, fully parametric.
+- **Wire & lacing**: holes or slots for metal wire, string, fabric strip, rubber bands or zip ties; running, cross, whip or notch stitch; hole size, slot length, pitch and edge distance.
+- **Finger joints**: box joints along every seam, with depth corrected for the real angle between the parts. *Unique* and *symmetric* patterns code each seam so only the right parts fit (after FoolProofJoint, CHI ’22).
+- **Flaticulation**: folds are cut right through and T-patterns along them clutch the two sides at their exact angle (Zheng et al., UIST ’22). Articulated or detent joints; neck and head width, edge coverage, stiffness, breakaway bridges, and kerf calibration (K, α) from the paper's Table A.1.
 
-**Joinery**
-- **Screws**: ISO 273 clearance holes for M2–M6, US #4–#8 and pop rivets, with close, normal or loose fit, or a custom diameter.
-- **3D printed parametric connectors** (built with Manifold, so the meshes are watertight and ready to print): snap pin/rivet, **hollow screw** (threaded sleeve and nut with an open centre), spacer, **node hub** (one per node, with arms at the real strip angles), and **angle bracket** (at the real panel angle; cross clips for waffles).
-- **None**: plain holes of any diameter.
-- **Folding latches**: four types, each fully parametric (width, depth, clearance, flare angle, count per edge).
+Every joinery panel shows a live preview drawn by the same code that cuts the parts.
+
+**Making: laser, CNC or 3D print**
+- **Laser cut**: passes, engrave speed, and optional **holding bridges** that leave small uncut gaps in each outline.
+- **CNC**: tool diameter, **dog-bone or T-bone corner reliefs** on every inside corner, holding tabs, feed and depth per pass; warns when the tool is wider than a slot.
+- **3D print**: the sheet becomes the **print bed** (presets for common printers or a custom size); parts are nested per plate and exported as **STL or 3MF plates**; filament, layer height, nozzle, infill, brim and flow.
+- **Weight** for every material (density in kg/m³; filament density and infill for prints) and time per process, shown live in the status bar and the parts panel.
 
 **Material, sheet, nesting**
-- Material presets from stainless steel to card stock, each with thickness, kerf, minimum bend radius, price and cut speed.
+- Material presets from stainless steel to card stock, felt, leather and PLA, each with thickness, kerf, minimum bend radius, density, price and cut speed.
 - Sheet presets or a custom size, margin, part spacing, and optional kerf compensation in the exported files.
 - **Tight nesting** fills sheets on a raster, so irregular parts interlock and small parts can sit inside the holes of big ones. **Fast nesting** uses MaxRects on bounding boxes. Rotations can be locked to keep the grain direction.
 
 **Exports**
-- **DXF R12** cut files, one per sheet or all in one, with layers `CUT_INNER` (cut first), `CUT_OUTER`, `ENGRAVE`, `SCORE`, `SHEET`. Text is single-stroke (Hershey), so it engraves cleanly.
+- **DXF R12** cut files, one per sheet or all in one, with layers `CUT_INNER` (cut first), `CUT_OUTER`, `ENGRAVE`, `SCORE`, `SHEET`. Text is single-stroke (Hershey), so it engraves cleanly. Holding bridges and CNC tabs break the outer outlines.
 - **SVG** at 1:1 mm (red = cut, blue = engrave, green = score) and **PDF** at true scale.
 - **Flat parts** (unrolled, not nested) as SVG or DXF.
 - **Assembled 3D model** as STL, OBJ, GLB or 3MF. The **original base model** and the **working surface** can also be exported.
 - **Assembly guide** PDF: a cover render, the steps for the chosen method, every sheet with part labels, and a page entry for every part with its outline, pin numbers and a render showing where it goes.
 - **Parts list & stats** as CSV or JSON: sizes, cut length, sheet positions, estimated cut time and cost.
-- **Printable connectors** as a zip of STL files plus a print list.
-- **Project file** (`.sheetform`), and a single **export everything** zip.
+- **Printable connectors and layer spacers** as a zip of STL files plus a print list.
+- **Print plates** (3D print) as STL or 3MF, one per bed.
+- Every file carries the author credit: DXF comments, SVG metadata, PDF properties and footer, 3MF metadata, STL header.
+- **Project file** (`.flatform`), and a single **export everything** zip.
 
 **Interface**
 - The left rail follows the build order and shows each step's live result. The status bar shows parts, pins, sheets, cut length, cut time and material cost.
 - Click a part in 3D, in the flat view or on a sheet, and it is selected in every view.
-- **Three looks**: *Model shop*, *Pattern tissue* and *Drafting*, each in dark and light. Each look has its own part and layer colours, which you can change in Settings.
-- Undo/redo for every change, autosave, and millimetres or inches.
+- **Three looks**: *Model shop*, *Pattern tissue* and *Drafting*, each in dark and light. Part and layer colours default to the FlatForm palette (red `#ee4036`, navy `#262261`, amber `#faaf40` and their tints) and can be changed per look in Settings; very deep colours are lifted automatically on dark grounds.
+- Units: **mm, cm, m or inches**, shown and typed everywhere (files stay in millimetres).
+- A splash while the app loads, and a progress card for anything slow: recomputes, exports, connectors and the guide.
+- Undo/redo for every change, and autosave.
 - Heavy geometry runs in a Web Worker, so the interface stays responsive. Each pipeline stage is cached, so changing the sheet size never re-runs the remesher.
 
 <p align="center">
-  <img src="docs/screenshot-detail.jpg" alt="Nested strips on a steel sheet with numbered holes" width="49%" />
-  <img src="docs/screenshot-method.jpg" alt="Clusters and maze lines on the surface" width="49%" />
+  <img src="docs/screenshot-detail.jpg" alt="Paper-craft pieces with glue flaps nested on four sheets" width="49%" />
+  <img src="docs/screenshot-method.jpg" alt="The table base rebuilt from a few repeated triangle shapes" width="49%" />
 </p>
 
 ## Quick start (web)
@@ -109,7 +134,7 @@ Output goes to `src-tauri/target/release/bundle/` (`.msi` and `.exe` on Windows,
 
 ## How the lattice works
 
-| Step | In Sheetform |
+| Step | In FlatForm |
 |---|---|
 | 1. Lines → SubD | **Shape → Skeleton**: a smooth union of tapered capsules, polygonised with Surface Nets. Open leaf ends are cut flat at the node. |
 | 2. Mesh + Kangaroo | **Surface**: isotropic remeshing to a triangle count, then *Relax → Minimal* pulls the skin taut between the rims. |
@@ -131,8 +156,12 @@ src/
     mesh/               topology, clipping, remeshing, relaxing, slicing, BVH projection
     modeling/           Surface Nets, skeleton bodies, primitives
     graph/              surface graphs (hex/tri/quad/star), clustering, spanning trees
-    lattice/ slices/ waffle/ folded/   the four construction methods
-    joinery/            hole sizes, latch shapes
+    lattice/ slices/ waffle/ folded/   the first four methods
+    unfold/             unfold engine, LSCM flattening, panel builder; paper-craft, minimal, flex hinges
+    sections/           interlocking sections in any orientation, guide curves; layers, classic
+    frame/              mesh lines, triangles
+    joinery/            hole sizes, latches, edge features (flaps, lacing, fingers), Flaticulation
+    manufacturing/      CNC reliefs, print beds, weight and time estimates
     connectors/         printed connectors (Manifold WASM)
     polygon/            Clipper wrapper: offsets, booleans, islands
     nest/               raster and MaxRects nesting
@@ -172,9 +201,12 @@ Vite · React 19 · TypeScript · Three.js / React Three Fiber · Zustand + zund
 - Nesting is a fast raster heuristic, not an optimal nester. A finer grid packs tighter but takes longer.
 - Rhino 3DM import uses the render meshes stored in the file. If a Brep has none, run `_Mesh` in Rhino or export STL/OBJ.
 - Node hubs are unique per node, so a large lattice exports a large zip.
+- Minimal joinery's flattening is conformal: angles are kept and areas may stretch a little, which suits felt and fabric but not paper. The app reports the worst stretch.
+- Triangles approach their class lengths but rarely hit them exactly; panels are cut to the ideal size and the app reports the average and worst error.
+- Flaticulation's kerf table was measured on 3 mm MDF; calibrate K and α for other boards.
 
 ## Licence
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE). © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/
 
-Acknowledgements: the Hershey fonts (public domain), [Clipper](https://www.angusj.com/clipper2/), [Manifold](https://github.com/elalish/manifold), [three.js](https://threejs.org), [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh), and the computational design community whose Grasshopper workflows inspired this tool.
+Acknowledgements: Zheng, Li and Mueller, *Flaticulation: Laser Cutting Joints with Articulated Angles* (UIST 2022); Park et al., *FoolProofJoint* (CHI 2022); Lévy et al., *Least Squares Conformal Maps* (SIGGRAPH 2002); the Hershey fonts (public domain), [Clipper](https://www.angusj.com/clipper2/), [Manifold](https://github.com/elalish/manifold), [three.js](https://threejs.org), [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh), and the computational design community whose Grasshopper workflows inspired this tool.

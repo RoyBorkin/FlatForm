@@ -1,3 +1,6 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+import { useMemo } from 'react';
+import { legible } from '@/themes/legible';
 import { create } from 'zustand';
 import type { Mode, WorldId } from '@/themes/themes';
 import { WORLDS } from '@/themes/themes';
@@ -17,7 +20,7 @@ export interface Settings {
   autoCompute: boolean;
 }
 
-const SETTINGS_KEY = 'sheetform.settings.v1';
+const SETTINGS_KEY = 'flatform.settings.v2';
 
 export const defaultSettings = (): Settings => ({
   world: 'modelshop',
@@ -63,6 +66,8 @@ interface UIState {
   hoveredPart: string | null;
   selectedNode: number | null;
   settings: Settings;
+  /** 'system' resolved to the actual mode in use. */
+  resolvedMode: 'dark' | 'light';
   exportOpen: boolean;
   setStep: (s: StepId) => void;
   setView: (v: ViewId) => void;
@@ -82,6 +87,7 @@ export const useUI = create<UIState>((set) => ({
   selectedNode: null,
   settings: loadSettings(),
   exportOpen: false,
+  resolvedMode: 'dark',
   setStep: (step) => set({ step }),
   setView: (view) => set({ view }),
   set: (p) => set(p as Partial<UIState>),
@@ -99,6 +105,9 @@ export const useUI = create<UIState>((set) => ({
   setOverlay: (k, v) => set((s) => ({ overlays: { ...s.overlays, [k]: v } })),
 }));
 
+/** Layer colours as chosen, made legible on the current ground (deep colours are lifted in dark mode). */
 export function useLayerColors(): string[] {
-  return useUI((s) => s.settings.layerColors[s.settings.world]);
+  const raw = useUI((s) => s.settings.layerColors[s.settings.world]);
+  const mode = useUI((s) => s.resolvedMode);
+  return useMemo(() => raw.map((c) => legible(c, mode)), [raw, mode]);
 }

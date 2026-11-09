@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 import { Box, FileCode2, FileText, Layers, Package, Printer, Scissors, Shapes, Table2, Archive, BookOpen, Save } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useProject } from '@/state/project';
@@ -10,6 +11,10 @@ import { Button, Callout, Section, Select, SegmentedField, SliderField, SwitchFi
 export function ExportPanel() {
   const e = useProject((s) => s.project.export);
   const joinKind = useProject((s) => s.project.joinery.kind);
+  const process = useProject((s) => s.project.manufacturing.process);
+  const hasSpacers = useResults((s) => !!s.method?.connectorData?.spacers?.length);
+  const printable = joinKind === 'printed' || hasSpacers;
+  const [fmtPlate, setFmtPlate] = useState<ModelFormat>('3mf');
   const update = useProject((s) => s.update);
   const ready = useResults((s) => !!s.method && !!s.nest && !s.busy);
   const sheets = useResults((s) => s.nest?.sheets.length ?? 0);
@@ -39,7 +44,19 @@ export function ExportPanel() {
           <Callout tone="info">Exports unlock when the parts and sheets are up to date.</Callout>
         </div>
       )}
-      <Section title="Cut files">
+      {process === 'print3d' && (
+        <Section title="Print plates">
+          <ExportRow icon={<Printer size={16} aria-hidden />} title="Plates" text={`${sheets} plate${sheets === 1 ? '' : 's'}, parts laid flat at sheet thickness`}>
+            <div className="btn-row btn-row--tight">
+              <Select ariaLabel="Format" value={fmtPlate} onChange={setFmtPlate} options={fmtOptions.filter((o) => o.value !== 'glb')} />
+              <Button variant="primary" size="sm" onClick={go('plates', () => exporters.plates(fmtPlate))} disabled={!ready || !!busy}>
+                Export
+              </Button>
+            </div>
+          </ExportRow>
+        </Section>
+      )}
+      <Section title={process === 'print3d' ? 'Outlines' : 'Cut files'}>
         <ExportRow icon={<Scissors size={16} aria-hidden />} title="DXF cut file" text={`${sheets} sheet${sheets === 1 ? '' : 's'} · layers CUT_INNER, CUT_OUTER, ENGRAVE, SCORE`}>
           <Button variant="primary" size="sm" onClick={go('dxf', exporters.dxf)} disabled={!ready || !!busy}>
             {busy === 'dxf' ? 'Exporting…' : 'DXF'}
@@ -99,8 +116,12 @@ export function ExportPanel() {
             Export
           </Button>
         </ExportRow>
-        <ExportRow icon={<Package size={16} aria-hidden />} title="Printed connectors" text={joinKind === 'printed' ? 'STL files + print list, zipped' : 'Choose 3D printed joinery first'}>
-          <Button size="sm" onClick={go('conn', exporters.connectors)} disabled={!ready || !!busy || joinKind !== 'printed'}>
+        <ExportRow
+          icon={<Package size={16} aria-hidden />}
+          title={hasSpacers ? 'Printed spacers & connectors' : 'Printed connectors'}
+          text={printable ? 'STL files + print list, zipped' : 'Choose 3D printed joinery first'}
+        >
+          <Button size="sm" onClick={go('conn', exporters.connectors)} disabled={!ready || !!busy || !printable}>
             {busy === 'conn' ? 'Building…' : 'STL'}
           </Button>
         </ExportRow>
@@ -123,7 +144,7 @@ export function ExportPanel() {
         </ExportRow>
         <ExportRow icon={<Save size={16} aria-hidden />} title="Project file" text="Re-open and keep editing later">
           <Button size="sm" onClick={go('proj', exporters.project)} disabled={!!busy}>
-            .sheetform
+            .flatform
           </Button>
         </ExportRow>
       </Section>

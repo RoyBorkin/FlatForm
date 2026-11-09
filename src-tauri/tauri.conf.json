@@ -1,8 +1,8 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "Sheetform",
-  "version": "0.1.0",
-  "identifier": "app.sheetform.desktop",
+  "productName": "FlatForm",
+  "version": "0.2.0",
+  "identifier": "app.flatform.desktop",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:5173",
@@ -13,7 +13,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "Sheetform",
+        "title": "FlatForm",
         "width": 1440,
         "height": 900,
         "minWidth": 1024,
@@ -32,8 +32,9 @@
     "targets": ["msi", "nsis", "dmg", "app"],
     "category": "DeveloperTool",
     "shortDescription": "Turn 3D shapes into flat sheet parts",
-    "longDescription": "Sheetform turns any 3D shape into flat parts you can laser-cut or CNC-cut from sheet material, with numbered holes, joinery, nesting and DXF/SVG/PDF export.",
-    "copyright": "MIT licence",
+    "longDescription": "FlatForm turns any 3D shape into flat parts you can laser-cut or CNC-cut from sheet material, with numbered holes, joinery, nesting and DXF/SVG/PDF export.",
+    "copyright": "© 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT",
+    "publisher": "Roy Borkin",
     "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
     "macOS": { "minimumSystemVersion": "11.0" },
     "windows": { "webviewInstallMode": { "type": "downloadBootstrapper" } }

@@ -1,3 +1,5 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+import { LogoMark } from '../components/LogoMark';
 import { Box, Download, Grid2x2, LayoutPanelTop, Redo2, Undo2, FolderOpen, Save } from 'lucide-react';
 import { useStore } from 'zustand';
 import { useProject, undo, redo } from '@/state/project';
@@ -65,13 +67,9 @@ export function TopBar() {
 
 function Logo() {
   return (
-    <div className="logo" aria-label="Sheetform">
-      <svg width="22" height="22" viewBox="0 0 64 64" aria-hidden>
-        <path d="M14 44 L32 18 L50 44" fill="none" stroke="var(--layer-0)" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M20 50 L44 50" stroke="var(--layer-1)" strokeWidth="6" strokeLinecap="round" />
-        <circle cx="32" cy="18" r="4.5" fill="var(--text)" />
-      </svg>
-      <span className="logo__word">Sheetform</span>
+    <div className="logo" aria-label="FlatForm">
+      <LogoMark />
+      <span className="logo__word">FlatForm</span>
     </div>
   );
 }

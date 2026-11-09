@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 /**
  * Saving and opening files. In the desktop app (Tauri) this uses native
  * dialogs; in the browser it falls back to a download / file picker.
@@ -40,4 +41,4 @@ export function pickFile(accept: string): Promise<File | null> {
   });
 }
 
-export const safeName = (s: string) => s.trim().replace(/[^\w\-. ]+/g, '').replace(/\s+/g, '-').toLowerCase() || 'sheetform';
+export const safeName = (s: string) => s.trim().replace(/[^\w\-. ]+/g, '').replace(/\s+/g, '-').toLowerCase() || 'flatform';

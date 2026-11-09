@@ -1,16 +1,17 @@
+<!-- FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT -->
 # Design
 
-Sheetform is a working tool (Operate mode): people spend long sessions tuning parameters. The layout is fixed and familiar. A "world" lends the interface its type, palette, density and one signature detail. Three worlds ship, each in dark and light. Users switch between them in Settings; the components never change.
+FlatForm is a working tool (Operate mode): people spend long sessions tuning parameters. The layout is fixed and familiar. A "world" lends the interface its type, palette, density and one signature detail. Three worlds ship, each in dark and light. Users switch between them in Settings; the components never change.
 
 ## Layout
 
 | Region | Purpose |
 |---|---|
 | Top bar | Project name, view switch (3D · Flat parts · Sheets), undo/redo, open/save, Export |
-| Left rail | The build order as navigation: Shape → Surface → Method → Joinery → Material & sheet → Nest → Export, each step with its live result and a status dot |
+| Left rail | The build order as navigation: Shape → Surface → Method → Joinery → Material & making → Nest → Export, then Settings and the author credit, each step with its live result and a status dot |
 | Viewport | 3D (R3F) or 2D sheet canvas, a display toolbar, and the selected-part card |
 | Inspector | Controls for the active step, grouped in collapsible sections |
-| Status bar | Live numbers: triangles, parts, pins, sheets, cut length, cut time, material cost, engine state |
+| Status bar | Live numbers: triangles, parts, pins, sheets or plates, cut length, machine time, weight, material cost, engine state |
 
 ## Worlds
 
@@ -22,9 +23,19 @@ Sheetform is a working tool (Operate mode): people spend long sessions tuning pa
 
 The light modes are museum board `#e4e1db`, tissue `#e8e2d3` and drafting film `#e3eaf0`. All tokens live in `src/styles/tokens.css`. Components read only the variables.
 
-## Part and layer colours
+## Brand palette, part and layer colours
 
-Each world has six defaults (`src/themes/themes.ts`), which users can edit per world. Model shop keeps the cyan `#3fc6d8` / magenta `#d65aa8` pairing for layers A and B. The colours are exposed as `--layer-0…5`.
+The FlatForm palette is signal red `#ee4036`, deep navy `#262261` and amber `#faaf40`. The mark is a flat red facet folding into an amber one on a navy tile (`src/ui/components/LogoMark.tsx`, `docs/app-icon.svg`).
+
+Every world defaults its part and layer colours to the palette and its tints (`PALETTE_LAYERS` in `src/themes/themes.ts`): A red, B navy, C amber, then lighter and deeper versions. Users can edit them per world. Navy is too deep to read on a graphite ground, so `themes/legible.ts` lifts very dark colours toward white in dark mode (and deepens very pale ones in light mode) before they reach `--layer-n` and the viewport; the stored colour is unchanged.
+
+## Method picker
+
+Eleven methods are grouped into four families (Surface, Frames, Sections, Folded) as compact tiles: a line glyph drawn in the layer colours and the name. The selected method's one-line description sits under the grid, so the controls stay close to the top of the inspector.
+
+## Loading
+
+A splash with the mark, the name, a red-to-amber progress sweep and the current pipeline stage covers the first load. After that, slow work appears in a small floating card above the status bar (spinner, label, stage, bar), never as a blocking modal.
 
 ## Motion
 

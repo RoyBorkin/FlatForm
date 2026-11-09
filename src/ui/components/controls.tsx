@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 /**
  * Form controls for the inspector. Every control is a standard, accessible
  * widget (Radix primitives underneath) with a visible label. Length values
@@ -11,17 +12,25 @@ import * as RTooltip from '@radix-ui/react-tooltip';
 import { Check, ChevronDown, ChevronRight, Info, TriangleAlert, CircleAlert } from 'lucide-react';
 import { useEffect, useId, useState, type ReactNode } from 'react';
 import { useProject } from '@/state/project';
+import type { Units } from '@/core/params';
 
 // ------------------------------------------------------------------ units
 
+export const UNIT_MM: Record<Units, number> = { mm: 1, cm: 10, m: 1000, in: 25.4 };
+const UNIT_DIGITS: Record<Units, number> = { mm: 1, cm: 2, m: 3, in: 2 };
+
+/** Lengths are stored in mm; this converts for display in the chosen unit. */
 export function useUnits() {
-  const unit = useProject((s) => s.project.units);
-  const k = unit === 'in' ? 25.4 : 1;
+  const unit = useProject((s) => s.project.units) ?? 'mm';
+  const k = UNIT_MM[unit] ?? 1;
   return {
     unit,
+    k,
     toDisplay: (mm: number) => mm / k,
     fromDisplay: (v: number) => v * k,
-    fmt: (mm: number, digits = unit === 'in' ? 2 : 1) => `${(mm / k).toFixed(digits)} ${unit}`,
+    fmt: (mm: number, digits = UNIT_DIGITS[unit], withUnit = true) => `${(mm / k).toFixed(digits)}${withUnit ? ` ${unit}` : ''}`,
+    /** Areas: mm² shown as unit². */
+    fmtArea: (mm2: number, digits = UNIT_DIGITS[unit]) => `${(mm2 / (k * k)).toFixed(digits)} ${unit}²`,
   };
 }
 
@@ -126,7 +135,7 @@ export function NumberInput({ value, onChange, min = -Infinity, max = Infinity, 
   const u = useUnits();
   const isLen = unit === 'len';
   const disp = isLen ? u.toDisplay(value) : value;
-  const dStep = isLen && u.unit === 'in' ? Math.max(step / 25.4, 0.001) : step;
+  const dStep = isLen && u.k !== 1 ? Math.max(step / u.k, 0.0001) : step;
   const [text, setText] = useState(String(roundTo(disp, dStep)));
   const [focused, setFocused] = useState(false);
   useEffect(() => {

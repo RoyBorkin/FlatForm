@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 /**
  * Small allocation-light vector helpers. Geometry code runs inside a Web Worker
  * on tens of thousands of elements, so these work on plain tuples and flat

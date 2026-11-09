@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 /**
  * DXF R12 (AC1009) writer. R12 is the most widely accepted dialect: laser
  * software (LightBurn, RDWorks, Trotec), CNC CAM and every CAD package read it.
@@ -61,6 +62,8 @@ export interface DxfOptions {
   textAs: 'strokes' | 'dxfText';
   /** Horizontal offset between sheets when several share one file. */
   gap?: number;
+  /** Comment lines written at the top of the file (authorship, settings). */
+  comments?: string[];
 }
 
 export function writeDxf(sheets: SheetDrawing[], opt: DxfOptions): string {
@@ -75,6 +78,8 @@ export function writeDxf(sheets: SheetDrawing[], opt: DxfOptions): string {
     maxX = ox;
     maxY = Math.max(maxY, s.height);
   }
+  // Comments (group 999) are ignored by readers but keep the authorship with the file.
+  for (const line of (opt.comments ?? [])) w.g(999, line);
   // HEADER
   w.g(0, 'SECTION');
   w.g(2, 'HEADER');
@@ -141,6 +146,7 @@ export function writeDxf(sheets: SheetDrawing[], opt: DxfOptions): string {
     for (const p of s.perforations) polyline(w, 'CUT_INNER', T(p), false);
     for (const p of s.cutInner) polyline(w, 'CUT_INNER', T(p), true);
     for (const p of s.cutOuter) polyline(w, 'CUT_OUTER', T(p), true);
+    for (const p of s.cutOuterOpen) polyline(w, 'CUT_OUTER', T(p), false);
     if (opt.includeSheetFrame) {
       const label = `SHEET ${s.index + 1}`;
       if (opt.textAs === 'dxfText') {

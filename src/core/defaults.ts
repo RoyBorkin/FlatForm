@@ -1,4 +1,5 @@
-import type { ProjectParams, SkeletonParams } from './params';
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+import type { CurveParams, ProjectParams, SkeletonParams } from './params';
 import { MATERIAL_PRESETS } from './presets';
 
 /**
@@ -32,6 +33,28 @@ export function tableBaseSkeleton(): SkeletonParams {
       { a: 4, b: 11 }, { a: 11, b: 7 }, { a: 11, b: 9 },
     ],
   };
+}
+
+export const CURVE_PRESETS: Record<Exclude<CurveParams['preset'], 'custom'>, [number, number][]> = {
+  straight: [
+    [0.5, 0],
+    [0.5, 1],
+  ],
+  arc: [
+    [0.15, 0],
+    [0.42, 0.45],
+    [0.5, 1],
+  ],
+  s: [
+    [0.3, 0],
+    [0.7, 0.33],
+    [0.3, 0.66],
+    [0.6, 1],
+  ],
+};
+
+export function defaultCurve(preset: Exclude<CurveParams['preset'], 'custom'> = 'arc', plane: CurveParams['plane'] = 'xz'): CurveParams {
+  return { plane, preset, points: CURVE_PRESETS[preset].map((p) => [p[0], p[1]] as [number, number]) };
 }
 
 export function defaultProject(): ProjectParams {
@@ -114,6 +137,65 @@ export function defaultProject(): ProjectParams {
       numberEdges: true,
       textHeight: 3,
     },
+    papercraft: {
+      targetFaces: 260,
+      strategy: 'flattest',
+      maxPieceFaces: 80,
+      autoSplit: true,
+      flaps: 'alternate',
+      flapShape: 'trapezoid',
+      flapWidth: 7,
+      flapAngle: 45,
+      foldStyle: 'lines',
+      flatThreshold: 2,
+      edgeNumbers: true,
+      pieceLabels: true,
+      textHeight: 3,
+    },
+    minimal: { targetFaces: 900, pieces: 6, seed: 3, autoSplit: true, numberSeams: true, seamMarks: true, textHeight: 4 },
+    flexhinge: {
+      targetFaces: 700,
+      pieces: 8,
+      seed: 5,
+      autoSplit: true,
+      numberSeams: true,
+      seamMarks: true,
+      textHeight: 4,
+      pattern: 'straight',
+      cutLength: 18,
+      bridge: 3,
+      spacing: 1.6,
+      minAngle: 4,
+      bendRadius: 14,
+    },
+    layers: {
+      mode: 'direction',
+      azimuth: 0,
+      elevation: 90,
+      curve: defaultCurve('arc', 'xz'),
+      pitch: 14,
+      hollow: true,
+      wall: 16,
+      rods: 2,
+      registration: true,
+      labelParts: true,
+      textHeight: 5,
+      spacer: { enabled: true, shape: 'hex', size: 12 },
+    },
+    meshlines: { targetFaces: 500, barWidth: 10, orientation: 'radial', endStyle: 'round', nodeClearance: 3, lengthStep: 1, labelBars: true, textHeight: 3 },
+    triangles: { targetFaces: 240, lengthClasses: 3, iterations: 400, style: 'frame', frameWidth: 12, gap: 1, cornerTrim: 4, labelParts: true, textHeight: 4 },
+    classic: {
+      style: 'revolve',
+      grid: { plane: 'xy', countA: 7, countB: 5, rotate: 0, inset: 0.05 },
+      revolve: { profiles: 2, rings: 6, inset: 0.06, twist: 0 },
+      curve: { curve: defaultCurve('arc', 'xz'), ribs: 14, spines: 1, spineGap: 40, inset: 0.03 },
+      hollow: false,
+      frame: 18,
+      slotClearance: 0.15,
+      slotLeadIn: 0.6,
+      labelParts: true,
+      textHeight: 5,
+    },
     joinery: {
       kind: 'screws',
       screw: { preset: 'M2', diameter: 2.4, fit: 'normal' },
@@ -130,10 +212,31 @@ export function defaultProject(): ProjectParams {
         armLength: 14,
       },
       latch: { kind: 'tabSlot', width: 8, depth: 6, clearance: 0.2, perEdge: 0, angle: 30 },
+      wire: { preset: 'string', stitch: 'cross', holeDiameter: 2.5, slotLength: 0, pitch: 12, edgeOffset: 5 },
+      fingers: { width: 10, pattern: 'classic', depthMode: 'auto', depth: 3, clearance: 0.1 },
+      flaticulation: { joint: 'articulated', kerfOffset: 0.12, kerfAngle: 2.1, neckWidth: 2.2, headWidth: 6, occupancy: 0.55, stiffness: 0.5, breakTab: 0.6 },
+    },
+    manufacturing: {
+      process: 'laser',
+      laser: { passes: 1, engraveSpeed: 250, bridges: 0, bridgeWidth: 0.4 },
+      cnc: { toolDiameter: 3.175, dogbones: true, dogboneStyle: 'dogbone', tabs: 3, tabWidth: 5, feed: 1500, depthPerPass: 1.5 },
+      print: { material: 'PLA', density: 1.24, layerHeight: 0.2, nozzle: 0.4, infill: 0.2, speed: 12, bed: 'mk4', bedW: 250, bedH: 210, brim: 0 },
     },
     material: { ...MATERIAL_PRESETS[0] },
     sheet: { width: 1000, height: 500, margin: 8, spacing: 4, kerfCompensation: false },
     nest: { mode: 'tight', rotations: 8, resolution: 2.5, groupByLayer: true },
     export: { dxfLayout: 'perSheet', textAs: 'strokes', svgStroke: 0.1, includeSheetFrame: true },
   };
+}
+
+/** Fill anything missing from an older saved project with today's defaults (deep, arrays kept as saved). */
+export function withDefaults(saved: Partial<ProjectParams>): ProjectParams {
+  const merge = (d: unknown, s: unknown): unknown => {
+    if (s === undefined || s === null) return d;
+    if (Array.isArray(d) || Array.isArray(s) || typeof d !== 'object' || typeof s !== 'object' || d === null) return s;
+    const out: Record<string, unknown> = { ...(d as Record<string, unknown>) };
+    for (const [k, v] of Object.entries(s as Record<string, unknown>)) out[k] = merge((d as Record<string, unknown>)[k], v);
+    return out;
+  };
+  return merge(defaultProject(), saved) as ProjectParams;
 }

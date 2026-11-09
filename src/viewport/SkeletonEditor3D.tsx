@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 import { TransformControls } from '@react-three/drei';
 import { useMemo, useRef, useState } from 'react';
 import { Mesh } from 'three';

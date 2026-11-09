@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 import type { SurfaceGraph } from './graph';
 import type { TreeAlgorithm } from '../params';
 import { rng } from '../math/rng';

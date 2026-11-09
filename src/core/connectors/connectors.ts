@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 /**
  * Parametric 3D-printed connectors, built with Manifold (exact, watertight
  * booleans) so every STL slices cleanly. All sizes in mm; each connector is
@@ -70,6 +71,29 @@ export function buildConnector(W: ManifoldToplevel, spec: ConnectorSpec, data: M
       return [{ name: `snap-pin_d${p.pinDiameter}_grip${grip.toFixed(1)}`, count, mesh: toMesh(pin) }];
     }
     case 'spacer': {
+      if (data?.spacers?.length) {
+        // Layers: one spacer per gap length, in the chosen shape, bored for the rod.
+        const size = data.spacerSize ?? p.headDiameter;
+        const bore = (data.spacerBore ?? p.pinDiameter) / 2 + p.clearance;
+        const shape = data.spacerShape ?? 'round';
+        const outline = () => {
+          if (shape === 'round') return CrossSection.circle(size / 2, SEG);
+          if (shape === 'square') return CrossSection.square([size, size], true);
+          if (shape === 'hex') return CrossSection.circle(size / 2 / Math.cos(Math.PI / 6), 6);
+          const pts: [number, number][] = [];
+          for (let i = 0; i < 10; i++) {
+            const r = i % 2 ? size * 0.3 : size / 2;
+            const a = (i * Math.PI) / 5 + Math.PI / 2;
+            pts.push([Math.cos(a) * r, Math.sin(a) * r]);
+          }
+          return new CrossSection([pts]);
+        };
+        return data.spacers.map(({ length, count: n }) => {
+          const h = Math.max(0.4, length - p.clearance);
+          const body = outline().extrude(h).subtract(cyl(h + 2, bore).translate([0, 0, -1]));
+          return { name: `layer-spacer_${shape}${size}_L${length.toFixed(1)}`, count: n, mesh: toMesh(body) };
+        });
+      }
       const inner = p.pinDiameter / 2 + p.clearance;
       const outer = inner + p.wall;
       const s = cyl(p.spacerGap, outer).subtract(cyl(p.spacerGap + 2, inner).translate([0, 0, -1]));
@@ -96,8 +120,8 @@ export function buildConnector(W: ManifoldToplevel, spec: ConnectorSpec, data: M
       const hubs = data?.hubs ?? [];
       const out: ConnectorPart[] = [];
       const stack = spec.thickness * spec.layers;
-      const chH = stack + p.clearance;
-      const chW = spec.stripWidth + p.clearance;
+      const chH = (data?.hubChannel?.height ?? stack) + p.clearance;
+      const chW = (data?.hubChannel?.width ?? spec.stripWidth) + p.clearance;
       const H = chH + 2 * p.wall;
       const armW = chW + 2 * p.wall;
       for (const hub of hubs.slice(0, 4000)) {

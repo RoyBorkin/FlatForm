@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 import { BufferAttribute, BufferGeometry, Vector3 } from 'three';
 import { MeshBVH } from 'three-mesh-bvh';
 import type { MeshData } from '../types';

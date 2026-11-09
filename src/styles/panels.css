@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 .panel-intro {
   padding: var(--sp-3) var(--sp-4) 0;
   color: var(--text-2);
@@ -103,7 +104,48 @@
 }
 
 /* method cards */
+.method-groups {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--line);
+}
+.method-group__title {
+  margin: 0 0 6px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--text-3);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
 .method-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.method-grid .method-card {
+  padding: 8px 8px 9px;
+  gap: 0;
+}
+.method-grid .method-card__glyph {
+  height: 30px;
+  margin-bottom: 4px;
+}
+.method-grid .method-card__title {
+  font-size: var(--fs-sm);
+  line-height: 1.25;
+}
+.method-desc {
+  margin: 0;
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+  color: var(--text-2);
+}
+.method-desc strong {
+  color: var(--text);
+  font-weight: 600;
+}
+.join-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
@@ -608,4 +650,141 @@
 }
 .canvas2d__fit:hover {
   color: var(--text);
+}
+
+/* joint previews (wire, fingers, flaticulation) */
+.joint-preview {
+  width: 100%;
+  height: auto;
+  max-height: 120px;
+  margin: 6px 0 2px;
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+}
+.joint-preview__part {
+  stroke-width: 0.5;
+  vector-effect: non-scaling-stroke;
+}
+.joint-preview__part--0 {
+  fill: color-mix(in srgb, var(--layer-0) 22%, transparent);
+  stroke: var(--layer-0);
+}
+.joint-preview__part--1 {
+  fill: color-mix(in srgb, var(--layer-1) 22%, transparent);
+  stroke: var(--layer-1);
+}
+.joint-preview__hole {
+  fill: var(--panel);
+  stroke: var(--text-2);
+  stroke-width: 0.35;
+}
+.joint-preview__cut {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 0.45;
+}
+.joint-preview__score {
+  fill: none;
+  stroke: var(--text-2);
+  stroke-width: 0.35;
+  stroke-dasharray: 1.4 1.2;
+}
+
+/* guide curve editor */
+.curve-field {
+  display: grid;
+  gap: var(--sp-2);
+}
+.curve-field__pad {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px;
+  align-items: start;
+}
+.curve-field__svg {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+  background: var(--bg-sunken);
+  touch-action: none;
+  user-select: none;
+}
+.curve-field__box {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-dasharray: 3 3;
+}
+.curve-field__axis {
+  font: 500 9px var(--font-num);
+  fill: var(--text-3);
+}
+.curve-field__curve {
+  fill: none;
+  stroke: var(--layer-0);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.curve-field__pt {
+  fill: var(--panel);
+  stroke: var(--layer-0);
+  stroke-width: 2;
+  cursor: grab;
+  transition: r 120ms var(--ease-out);
+}
+.curve-field__pt[data-end='true'] {
+  fill: var(--layer-0);
+}
+.curve-field__pt:active {
+  cursor: grabbing;
+}
+.curve-field__pt:focus-visible {
+  outline: none;
+  stroke: var(--focus);
+  stroke-width: 3;
+}
+.curve-field__tools {
+  display: grid;
+  gap: 4px;
+}
+
+/* weight readout and paired fields */
+.readout {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin: 2px 0 4px;
+}
+.readout div {
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-sunken);
+}
+.readout dt {
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+}
+.readout dd {
+  margin: 0;
+  font: 600 var(--fs-md) var(--font-num);
+  font-variant-numeric: tabular-nums;
+}
+.field-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-2);
+}
+
+/* about */
+.about {
+  display: grid;
+  gap: 4px;
+}
+.about__name {
+  margin: 0;
+  font-weight: 650;
+}
+.about a {
+  color: var(--accent);
+  text-underline-offset: 2px;
 }

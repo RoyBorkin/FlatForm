@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 import { useEffect } from 'react';
 import { undo, redo } from '@/state/project';
 import { useUI, type StepId } from '@/state/ui';

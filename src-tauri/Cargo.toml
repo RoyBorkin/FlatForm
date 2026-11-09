@@ -1,14 +1,16 @@
+# FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT
 [package]
-name = "sheetform"
-version = "0.1.0"
+name = "flatform"
+version = "0.2.0"
 description = "Turn 3D shapes into flat sheet parts"
-authors = ["Sheetform contributors"]
+authors = ["Roy Borkin <royborkin@gmail.com>"]
+homepage = "https://royborkin.github.io/"
 license = "MIT"
 edition = "2021"
 rust-version = "1.77"
 
 [lib]
-name = "sheetform_lib"
+name = "flatform_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 /**
  * Turns nested parts into final drawing entities in sheet coordinates (mm,
  * origin bottom-left, y up). Every exporter draws from this one list, so
@@ -16,6 +17,8 @@ export interface SheetDrawing {
   /** Inner cuts first (holes, cut-outs, perforations), then outer outlines: the order a laser should cut. */
   cutInner: Path2[];
   cutOuter: Path2[];
+  /** Outer outlines broken by holding bridges (laser) or tabs (CNC): open polylines on the outer cut layer. */
+  cutOuterOpen: Path2[];
   circles: Circle2[];
   perforations: Path2[];
   engrave: Path2[];
@@ -50,7 +53,41 @@ export function drawPart(part: Part2D, pl: Placement, kerf = 0) {
   };
 }
 
-export function sheetDrawings(nest: NestResult, parts: Map<string, Part2D>, sheet: SheetParams, kerf: number): SheetDrawing[] {
+/**
+ * Break a closed outline into open runs, leaving `count` evenly spaced gaps of
+ * `width` that hold the part in the sheet until it is snapped out.
+ */
+export function bridgeOutline(path: Path2, count: number, width: number): Path2[] {
+  const n = path.length;
+  if (count <= 0 || n < 3) return [path.concat([path[0]])];
+  const cum = [0];
+  for (let i = 1; i <= n; i++) {
+    const a = path[i - 1], b = path[i % n];
+    cum.push(cum[i - 1] + Math.hypot(b[0] - a[0], b[1] - a[1]));
+  }
+  const L = cum[n];
+  if (L < count * width * 4) return [path.concat([path[0]])];
+  const at = (s: number): V2 => {
+    let i = 1;
+    while (i < n && cum[i] < s) i++;
+    const a = path[i - 1], b = path[i % n];
+    const f = (s - cum[i - 1]) / Math.max(1e-9, cum[i] - cum[i - 1]);
+    return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f];
+  };
+  const runs: Path2[] = [];
+  const step = L / count;
+  for (let k = 0; k < count; k++) {
+    const s0 = k * step + width / 2, s1 = (k + 1) * step - width / 2;
+    const run: Path2 = [at(s0)];
+    for (let i = 1; i < n; i++) if (cum[i] > s0 && cum[i] < s1) run.push(path[i]);
+    // the closing vertex sits at cum[n] = L, already outside every run
+    run.push(at(s1));
+    runs.push(run);
+  }
+  return runs;
+}
+
+export function sheetDrawings(nest: NestResult, parts: Map<string, Part2D>, sheet: SheetParams, kerf: number, bridges?: { count: number; width: number }): SheetDrawing[] {
   return nest.sheets.map((s) => {
     const d: SheetDrawing = {
       index: s.index,
@@ -59,6 +96,7 @@ export function sheetDrawings(nest: NestResult, parts: Map<string, Part2D>, shee
       height: s.height,
       cutInner: [],
       cutOuter: [],
+      cutOuterOpen: [],
       circles: [],
       perforations: [],
       engrave: [],
@@ -70,7 +108,8 @@ export function sheetDrawings(nest: NestResult, parts: Map<string, Part2D>, shee
       const part = parts.get(pl.partId);
       if (!part) continue;
       const g = drawPart(part, pl, sheet.kerfCompensation ? kerf : 0);
-      d.cutOuter.push(...g.outer);
+      if (bridges && bridges.count > 0) for (const o of g.outer) d.cutOuterOpen.push(...bridgeOutline(o, bridges.count, bridges.width));
+      else d.cutOuter.push(...g.outer);
       d.cutInner.push(...g.inner);
       d.circles.push(...g.circles);
       d.perforations.push(...g.perforations);

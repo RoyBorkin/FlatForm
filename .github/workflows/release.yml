@@ -1,3 +1,4 @@
+# FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT
 name: Desktop release
 
 # Push a tag like v0.2.0 to build Windows and macOS installers
@@ -42,7 +43,7 @@ jobs:
           # APPLE_ID, APPLE_PASSWORD, APPLE_TEAM_ID
         with:
           tagName: ${{ github.ref_name }}
-          releaseName: 'Sheetform ${{ github.ref_name }}'
+          releaseName: 'FlatForm ${{ github.ref_name }}'
           releaseBody: 'Windows (.msi / .exe) and macOS (.dmg, universal) builds. See the README for install notes.'
           releaseDraft: true
           prerelease: false

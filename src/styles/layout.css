@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 .app {
   display: grid;
   grid-template-columns: var(--rail-w) minmax(0, 1fr) var(--inspector-w);
@@ -199,7 +200,7 @@
   }
 }
 .rail__settings {
-  margin-top: var(--sp-4);
+  margin-top: auto;
   border-top: 1px solid var(--line);
   border-radius: 0 0 var(--radius) var(--radius);
   padding-top: 12px;
@@ -454,6 +455,28 @@
     display: none;
   }
   .status .stat:nth-child(n + 3) {
+    display: none;
+  }
+}
+
+.rail__credit {
+  display: block;
+  flex: none;
+  padding: 6px var(--sp-3) 2px;
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  text-decoration: none;
+  transition: color var(--dur-fast) ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .rail__credit:hover {
+    color: var(--text-2);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+}
+@media (max-width: 680px) {
+  .rail__credit {
     display: none;
   }
 }

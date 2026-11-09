@@ -1,3 +1,4 @@
+<!-- FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT -->
 # Product
 
 <!-- impeccable:product-schema 1 -->
@@ -16,11 +17,13 @@ Designers, makers, architects and computational-design students who want to turn
 
 ## Product Purpose
 
-Take a 3D object (modelled in the app or imported) and rebuild it from flat 2D sheet parts, as in the reference "From Organic Shape to Fabrication" pipeline. Export the assembled 3D model, the flat parts, a ready-to-cut DXF, an assembly guide, a parts list, the original model, and printable connectors. Success: a file a laser or CNC cutter can cut without cleanup, and parts that go back together.
+Take a 3D object (modelled in the app or imported) and rebuild it from flat 2D sheet parts, as in the reference "From Organic Shape to Fabrication" pipeline. Export the assembled 3D model, the flat parts, a ready-to-cut DXF, an assembly guide, a parts list, the original model, and printable connectors. Success: a file a laser or CNC cutter can cut (or a plate a printer can print) without cleanup, and parts that go back together.
+
+Author: Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/. The name is FlatForm; the brand palette is red #ee4036, navy #262261 and amber #faaf40.
 
 ## Positioning
 
-One tool that covers the whole route from shape to cut file — modelling, surface prep, four construction methods, joinery and nesting — with every parameter exposed, without needing a Grasshopper definition.
+One tool that covers the whole route from shape to cut file — modelling, surface prep, eleven construction methods, seven kinds of joinery, laser/CNC/3D-print making and nesting — with every parameter exposed, without needing a Grasshopper definition.
 
 ## Operating Context
 
@@ -36,7 +39,7 @@ Used at a desk alongside laser cutters, CNC routers and 3D printers. The output 
 
 ## Brand Commitments
 
-None yet. The product name "Sheetform" is a working name chosen during the build.
+None yet. The product name "FlatForm" is a working name chosen during the build.
 
 ## Evidence on Hand
 

@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 import type { MeshData } from '../types';
 import { buildTopology, triCentroid, triNormal, vertexNormals } from '../mesh/mesh';
 import { add3, getV, lerp3, norm3, type V3 } from '../math/vec';

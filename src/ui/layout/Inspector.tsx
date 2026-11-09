@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 import { useUI, type StepId } from '@/state/ui';
 import { ShapePanel } from '../panels/ShapePanel';
 import { SurfacePanel } from '../panels/SurfacePanel';
@@ -13,7 +14,7 @@ const TITLES: Record<StepId, string> = {
   surface: 'Surface',
   method: 'Method',
   joinery: 'Joinery',
-  material: 'Material & sheet',
+  material: 'Material & making',
   nest: 'Nest',
   export: 'Export',
   settings: 'Settings',

@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 import type { LatchKind, MethodKind } from '@/core/params';
 import { latchAt } from '@/core/joinery/latches';
 
@@ -36,6 +37,70 @@ export function MethodGlyph({ kind }: { kind: MethodKind }) {
         <g fill="none" strokeWidth="2" strokeLinejoin="round">
           <path d="M8 32 L20 8 L32 32 Z M20 8 L44 8 L32 32 M44 8 L56 32 L32 32" stroke={a} />
           <path d="M20 8 L32 32 M44 8 L32 32" stroke={b} strokeDasharray="3 3" />
+        </g>
+      )}
+      {kind === 'papercraft' && (
+        <g fill="none" strokeWidth="1.8" strokeLinejoin="round">
+          <path d="M14 30 L24 10 L34 30 Z M34 30 L44 10 L24 10 M44 10 L54 30 L34 30" stroke={a} />
+          <path d="M14 30 L18 35 L30 35 L34 30 M44 10 L48 5 L52 9" stroke={b} />
+          <path d="M24 10 L34 30 M44 10 L34 30" stroke={b} strokeDasharray="2.5 2" />
+        </g>
+      )}
+      {kind === 'minimal' && (
+        <g fill="none" strokeWidth="2" strokeLinecap="round">
+          <path d="M6 30 C14 8 26 6 31 20 L31 34 Z" stroke={a} />
+          <path d="M58 30 C50 8 38 6 33 20 L33 34 Z" stroke={b} />
+          {[14, 20, 26, 32].map((y) => (
+            <path key={y} d={`M29 ${y - 2} L35 ${y + 1}`} stroke="var(--text)" strokeWidth="1.2" />
+          ))}
+        </g>
+      )}
+      {kind === 'flexhinge' && (
+        <g fill="none" strokeWidth="2" strokeLinecap="round">
+          <path d="M6 32 L22 32 C30 32 32 8 42 8 L58 8" stroke={a} />
+          {[0, 1, 2, 3, 4].map((i) => (
+            <path key={i} d={`M${24 + i * 3.6} ${i % 2 ? 12 : 16} L${24 + i * 3.6} ${i % 2 ? 26 : 30}`} stroke={b} strokeWidth="1.3" />
+          ))}
+        </g>
+      )}
+      {kind === 'layers' && (
+        <g fill="none" strokeWidth="2.2" strokeLinecap="round">
+          {[0, 1, 2, 3, 4, 5].map((i) => {
+            const x = 10 + i * 9, h = 10 + Math.sin((i / 5) * Math.PI) * 10;
+            return <path key={i} d={`M${x} ${20 - h} Q${x + 3} 20 ${x} ${20 + h}`} stroke={i % 2 ? b : a} transform={`rotate(${(i - 2.5) * 6} ${x} 34)`} />;
+          })}
+          <path d="M8 22 Q32 14 58 22" stroke="var(--text)" strokeWidth="1.2" strokeDasharray="2 2" />
+        </g>
+      )}
+      {kind === 'meshlines' && (
+        <g strokeWidth="2.6" strokeLinecap="round">
+          {[
+            [8, 32, 20, 10], [20, 10, 32, 32], [8, 32, 32, 32], [32, 32, 44, 10], [20, 10, 44, 10], [44, 10, 56, 32], [32, 32, 56, 32],
+          ].map(([x1, y1, x2, y2], i) => (
+            <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={i % 2 ? b : a} />
+          ))}
+          {[[8, 32], [20, 10], [32, 32], [44, 10], [56, 32]].map(([x, y]) => (
+            <circle key={`${x}${y}`} cx={x} cy={y} r="2.2" fill="var(--text)" />
+          ))}
+        </g>
+      )}
+      {kind === 'triangles' && (
+        <g strokeWidth="1.6" strokeLinejoin="round">
+          {[
+            [[8, 32], [19, 11], [30, 32]],
+            [[19, 11], [41, 11], [30, 32]],
+            [[30, 32], [41, 11], [52, 32]],
+          ].map((t, i) => (
+            <path key={i} d={`M${t.map((q) => q.join(' ')).join(' L')} Z`} fill={i === 1 ? b : a} fillOpacity="0.22" stroke={i === 1 ? b : a} transform={`translate(${(i - 1) * 1.5} 0)`} />
+          ))}
+        </g>
+      )}
+      {kind === 'classic' && (
+        <g fill="none" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M32 4 C40 12 42 24 40 36 L24 36 C22 24 24 12 32 4 Z" stroke={a} />
+          <ellipse cx="32" cy="16" rx="13" ry="3.2" stroke={b} />
+          <ellipse cx="32" cy="28" rx="15" ry="3.6" stroke={b} />
+          <path d="M32 4 L32 36" stroke={a} strokeWidth="1.4" />
         </g>
       )}
     </svg>

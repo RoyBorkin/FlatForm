@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 import { Shuffle } from 'lucide-react';
 import { useProject } from '@/state/project';
 import { useResults } from '@/state/results';
@@ -6,13 +7,13 @@ import type { LatticeLayer, LatticeParams, MethodKind, SlicesParams, WaffleParam
 import { GROUP_LETTERS } from '@/core/parts';
 import { Callout, IconButton, NumberField, Section, SegmentedField, SelectField, SliderField, SwitchField } from '../components/controls';
 import { MethodGlyph } from '../components/glyphs';
+import { METHODS } from '../labels';
+import { JOINERY_SUPPORT } from '@/core/joinery/holes';
+import { FlexHingeControls, MinimalControls, PapercraftControls } from './method/UnfoldControls';
+import { ClassicControls, LayersControls } from './method/SectionControls';
+import { MeshLinesControls, TrianglesControls } from './method/FrameControls';
 
-const METHODS: { id: MethodKind; title: string; text: string }[] = [
-  { id: 'lattice', title: 'Branching lattice', text: 'Maze strips in layers, pinned at every node. Bends to any curve.' },
-  { id: 'slices', title: 'Stacked slices', text: 'Contours stacked on dowels. Solid look, any thick sheet.' },
-  { id: 'waffle', title: 'Interlocking waffle', text: 'Two rib families that slot together. No hardware.' },
-  { id: 'folded', title: 'Folded panels', text: 'Unfolded facets that fold and latch back into shape.' },
-];
+const FAMILIES = ['Surface', 'Frames', 'Sections', 'Folded'] as const;
 
 export function MethodPanel() {
   const method = useProject((s) => s.project.method);
@@ -20,14 +21,39 @@ export function MethodPanel() {
   const result = useResults((s) => s.method);
   return (
     <>
-      <div className="method-grid" role="radiogroup" aria-label="Construction method">
-        {METHODS.map((m) => (
-          <button key={m.id} type="button" role="radio" aria-checked={method === m.id} className="method-card" onClick={() => update((p) => void (p.method = m.id))}>
-            <MethodGlyph kind={m.id} />
-            <span className="method-card__title">{m.title}</span>
-            <span className="method-card__text">{m.text}</span>
-          </button>
+      <div className="method-groups" role="radiogroup" aria-label="Construction method">
+        {FAMILIES.map((fam) => (
+          <div className="method-group" key={fam}>
+            <h3 className="method-group__title">{fam}</h3>
+            <div className="method-grid">
+              {METHODS.filter((m) => m.family === fam).map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={method === m.id}
+                  aria-describedby={method === m.id ? 'method-desc' : undefined}
+                  title={m.text}
+                  className="method-card"
+                  onClick={() =>
+                    update((p) => {
+                      p.method = m.id as MethodKind;
+                      // Keep the joinery valid for the new method.
+                      const ok = JOINERY_SUPPORT[p.method].kinds;
+                      if (!ok.includes(p.joinery.kind)) p.joinery.kind = ok[0];
+                    })
+                  }
+                >
+                  <MethodGlyph kind={m.id} />
+                  <span className="method-card__title">{m.title}</span>
+                </button>
+              ))}
+            </div>
+          </div>
         ))}
+        <p className="method-desc" id="method-desc">
+          <strong>{METHODS.find((m) => m.id === method)?.title}.</strong> {METHODS.find((m) => m.id === method)?.text}
+        </p>
       </div>
       {result?.warnings.map((w) => (
         <div className="panel-pad" key={w}>
@@ -38,6 +64,13 @@ export function MethodPanel() {
       {method === 'slices' && <SlicesControls />}
       {method === 'waffle' && <WaffleControls />}
       {method === 'folded' && <FoldedControls />}
+      {method === 'papercraft' && <PapercraftControls />}
+      {method === 'minimal' && <MinimalControls />}
+      {method === 'flexhinge' && <FlexHingeControls />}
+      {method === 'layers' && <LayersControls />}
+      {method === 'classic' && <ClassicControls />}
+      {method === 'meshlines' && <MeshLinesControls />}
+      {method === 'triangles' && <TrianglesControls />}
     </>
   );
 }
@@ -299,6 +332,7 @@ function FoldedControls() {
             <SliderField label="Gap" value={F.perforation.gap} min={0.3} max={20} step={0.1} unit="len" onChange={(v) => set((x) => void (x.perforation.gap = v))} />
           </>
         )}
+        {join === 'flaticulation' && <p className="muted small">Folds are cut as Flaticulation joints (Joinery step). Seams between parts use latches.</p>}
         {join === 'none' && (
           <>
             <SegmentedField

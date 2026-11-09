@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 import { useProject } from '@/state/project';
 import { useResults } from '@/state/results';
 import { useLayerColors, useUI } from '@/state/ui';

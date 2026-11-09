@@ -1,2 +1,3 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 /// <reference types="vite/client" />
 declare const __APP_VERSION__: string;

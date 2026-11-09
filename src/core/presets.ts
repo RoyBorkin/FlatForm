@@ -1,17 +1,21 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 import type { MaterialParams, PrimitiveKind } from './params';
 
 export const MATERIAL_PRESETS: MaterialParams[] = [
-  { preset: 'stainless-1', name: 'Stainless steel 1.0 mm', thickness: 1, kerf: 0.15, minBendRadius: 120, pricePerSheet: 42, cutSpeed: 35, look: 'metal', color: '#b9bcc0' },
-  { preset: 'alu-1.5', name: 'Aluminium 1.5 mm', thickness: 1.5, kerf: 0.2, minBendRadius: 150, pricePerSheet: 28, cutSpeed: 40, look: 'metal', color: '#c9ccd0' },
-  { preset: 'ply-3', name: 'Birch plywood 3 mm', thickness: 3, kerf: 0.2, minBendRadius: 0, pricePerSheet: 9, cutSpeed: 20, look: 'plywood', color: '#d9b98c' },
-  { preset: 'ply-1.5', name: 'Aircraft plywood 1.5 mm', thickness: 1.5, kerf: 0.15, minBendRadius: 180, pricePerSheet: 14, cutSpeed: 28, look: 'plywood', color: '#e0c49c' },
-  { preset: 'mdf-3', name: 'MDF 3 mm', thickness: 3, kerf: 0.25, minBendRadius: 0, pricePerSheet: 5, cutSpeed: 18, look: 'mdf', color: '#a98a69' },
-  { preset: 'acrylic-3', name: 'Acrylic 3 mm', thickness: 3, kerf: 0.2, minBendRadius: 0, pricePerSheet: 16, cutSpeed: 15, look: 'acrylic', color: '#d8eef2' },
-  { preset: 'pp-0.8', name: 'Polypropylene 0.8 mm', thickness: 0.8, kerf: 0.1, minBendRadius: 20, pricePerSheet: 6, cutSpeed: 45, look: 'plastic', color: '#eef0ea' },
-  { preset: 'cardboard-3', name: 'Corrugated cardboard 3 mm', thickness: 3, kerf: 0.3, minBendRadius: 40, pricePerSheet: 1.5, cutSpeed: 60, look: 'card', color: '#b98d5c' },
-  { preset: 'card-0.5', name: 'Card stock 0.5 mm', thickness: 0.5, kerf: 0.1, minBendRadius: 8, pricePerSheet: 0.6, cutSpeed: 80, look: 'card', color: '#ebe3d3' },
-  { preset: 'paper-0.2', name: 'Paper 0.2 mm', thickness: 0.2, kerf: 0.05, minBendRadius: 2, pricePerSheet: 0.1, cutSpeed: 120, look: 'paper', color: '#f6f3ec' },
-  { preset: 'felt-3', name: 'Wool felt 3 mm', thickness: 3, kerf: 0.3, minBendRadius: 5, pricePerSheet: 12, cutSpeed: 30, look: 'felt', color: '#7d7a76' },
+  { preset: 'stainless-1', name: 'Stainless steel 1.0 mm', thickness: 1, kerf: 0.15, minBendRadius: 120, pricePerSheet: 42, cutSpeed: 35, look: 'metal', color: '#b9bcc0', density: 8000 },
+  { preset: 'alu-1.5', name: 'Aluminium 1.5 mm', thickness: 1.5, kerf: 0.2, minBendRadius: 150, pricePerSheet: 28, cutSpeed: 40, look: 'metal', color: '#c9ccd0', density: 2700 },
+  { preset: 'ply-3', name: 'Birch plywood 3 mm', thickness: 3, kerf: 0.2, minBendRadius: 0, pricePerSheet: 9, cutSpeed: 20, look: 'plywood', color: '#d9b98c', density: 680 },
+  { preset: 'ply-1.5', name: 'Aircraft plywood 1.5 mm', thickness: 1.5, kerf: 0.15, minBendRadius: 180, pricePerSheet: 14, cutSpeed: 28, look: 'plywood', color: '#e0c49c', density: 650 },
+  { preset: 'mdf-3', name: 'MDF 3 mm', thickness: 3, kerf: 0.25, minBendRadius: 0, pricePerSheet: 5, cutSpeed: 18, look: 'mdf', color: '#a98a69', density: 750 },
+  { preset: 'acrylic-3', name: 'Acrylic 3 mm', thickness: 3, kerf: 0.2, minBendRadius: 0, pricePerSheet: 16, cutSpeed: 15, look: 'acrylic', color: '#d8eef2', density: 1190 },
+  { preset: 'pp-0.8', name: 'Polypropylene 0.8 mm', thickness: 0.8, kerf: 0.1, minBendRadius: 20, pricePerSheet: 6, cutSpeed: 45, look: 'plastic', color: '#eef0ea', density: 905 },
+  { preset: 'cardboard-3', name: 'Corrugated cardboard 3 mm', thickness: 3, kerf: 0.3, minBendRadius: 40, pricePerSheet: 1.5, cutSpeed: 60, look: 'card', color: '#b98d5c', density: 150 },
+  { preset: 'card-0.5', name: 'Card stock 0.5 mm', thickness: 0.5, kerf: 0.1, minBendRadius: 8, pricePerSheet: 0.6, cutSpeed: 80, look: 'card', color: '#ebe3d3', density: 700 },
+  { preset: 'paper-0.2', name: 'Paper 0.2 mm', thickness: 0.2, kerf: 0.05, minBendRadius: 2, pricePerSheet: 0.1, cutSpeed: 120, look: 'paper', color: '#f6f3ec', density: 400 },
+  { preset: 'fabric-0.6', name: 'Canvas / fabric 0.6 mm', thickness: 0.6, kerf: 0.1, minBendRadius: 1, pricePerSheet: 4, cutSpeed: 90, look: 'felt', color: '#c9c2b0', density: 550 },
+  { preset: 'leather-1.5', name: 'Leather 1.5 mm', thickness: 1.5, kerf: 0.15, minBendRadius: 4, pricePerSheet: 20, cutSpeed: 40, look: 'felt', color: '#8a5a3a', density: 900 },
+  { preset: 'pla-2', name: 'PLA print, 2 mm plates', thickness: 2, kerf: 0, minBendRadius: 60, pricePerSheet: 3, cutSpeed: 30, look: 'plastic', color: '#e8e4dc', density: 1240 },
+  { preset: 'felt-3', name: 'Wool felt 3 mm', thickness: 3, kerf: 0.3, minBendRadius: 5, pricePerSheet: 12, cutSpeed: 30, look: 'felt', color: '#7d7a76', density: 330 },
 ];
 
 export interface ScrewPreset {
@@ -48,6 +52,7 @@ export const SHEET_PRESETS = [
   { id: 'a4', label: 'A4 297 × 210 mm', w: 297, h: 210 },
   { id: 'letter', label: 'Letter 279 × 216 mm', w: 279.4, h: 215.9 },
   { id: '300x300', label: '300 × 300 mm', w: 300, h: 300 },
+  { id: 'cnc-1220', label: 'CNC 1220 × 2440 mm (full sheet)', w: 2440, h: 1220 },
 ];
 
 export const PRIMITIVES: { kind: PrimitiveKind; label: string; a: string; b: string; c: string }[] = [
@@ -62,3 +67,21 @@ export const PRIMITIVES: { kind: PrimitiveKind; label: string; a: string; b: str
   { kind: 'lampshade', label: 'Lampshade', a: 'Flare', b: 'Pleats', c: 'Pleat depth' },
   { kind: 'knot', label: 'Trefoil knot', a: 'Tube', b: 'Loops', c: 'Height' },
 ];
+
+export const PRINT_BEDS = [
+  { id: 'mk4', label: 'Prusa MK4 · 250 × 210', w: 250, h: 210 },
+  { id: 'x1', label: 'Bambu X1 / P1 · 256 × 256', w: 256, h: 256 },
+  { id: 'a1mini', label: 'Bambu A1 mini · 180 × 180', w: 180, h: 180 },
+  { id: 'ender3', label: 'Ender 3 · 220 × 220', w: 220, h: 220 },
+  { id: 'xl', label: 'Prusa XL · 360 × 360', w: 360, h: 360 },
+];
+
+export const PRINT_MATERIALS = { PLA: 1.24, PETG: 1.27, ABS: 1.04, TPU: 1.21 } as const;
+
+export const WIRE_PRESETS = {
+  metal: { label: 'Metal wire', holeDiameter: 1.4, slotLength: 0, pitch: 16, edgeOffset: 4, stitch: 'running' },
+  string: { label: 'String / cord', holeDiameter: 2.5, slotLength: 0, pitch: 12, edgeOffset: 5, stitch: 'cross' },
+  fabric: { label: 'Fabric ribbon', holeDiameter: 1.6, slotLength: 7, pitch: 16, edgeOffset: 6, stitch: 'running' },
+  rubber: { label: 'Rubber band', holeDiameter: 3, slotLength: 0, pitch: 22, edgeOffset: 3, stitch: 'notch' },
+  zip: { label: 'Zip tie', holeDiameter: 2, slotLength: 5, pitch: 30, edgeOffset: 6, stitch: 'running' },
+} as const;

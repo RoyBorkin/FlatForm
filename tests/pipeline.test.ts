@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 import { describe, expect, it } from 'vitest';
 import { defaultProject } from '../src/core/defaults';
 import { buildBase, prepareSurface, runMethod, runNest } from '../src/core/pipeline';

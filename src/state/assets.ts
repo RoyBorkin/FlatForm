@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 /**
  * Imported and sculpted meshes are big binary blobs, so they live outside the
  * undo history: in memory, in the worker, and in IndexedDB so a reload keeps
@@ -6,7 +7,7 @@
 import type { MeshData } from '@/core/types';
 
 const mem = new Map<string, MeshData>();
-const DB = 'sheetform';
+const DB = 'flatform';
 const STORE = 'assets';
 
 function openDb(): Promise<IDBDatabase | null> {

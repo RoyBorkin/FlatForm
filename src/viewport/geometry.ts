@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 /**
  * Three.js geometry for the assembled model. Shared by the viewport (which
  * uses instancing for speed) and the 3D exporters (which bake everything into
@@ -184,4 +185,35 @@ export function bakeAssembly(method: MethodResult, colors: string[]): Group {
     group.add(mesh);
   }
   return group;
+}
+
+/** Unit-height prism (z from 0 to 1) in the spacer's cross-section, bored for the rod. */
+export function spacerGeometry(shape: 'round' | 'square' | 'hex' | 'star', size: number): BufferGeometry {
+  const sh = new Shape();
+  const r = size / 2;
+  if (shape === 'round' || shape === 'hex') {
+    const n = shape === 'round' ? 40 : 6;
+    const rr = shape === 'hex' ? r / Math.cos(Math.PI / 6) : r;
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2;
+      if (i === 0) sh.moveTo(Math.cos(a) * rr, Math.sin(a) * rr);
+      else sh.lineTo(Math.cos(a) * rr, Math.sin(a) * rr);
+    }
+  } else if (shape === 'square') {
+    sh.moveTo(-r, -r);
+    sh.lineTo(r, -r);
+    sh.lineTo(r, r);
+    sh.lineTo(-r, r);
+  } else {
+    for (let i = 0; i < 10; i++) {
+      const rr = i % 2 ? r * 0.6 : r;
+      const a = (i * Math.PI) / 5 + Math.PI / 2;
+      if (i === 0) sh.moveTo(Math.cos(a) * rr, Math.sin(a) * rr);
+      else sh.lineTo(Math.cos(a) * rr, Math.sin(a) * rr);
+    }
+  }
+  sh.closePath();
+  const g = new ExtrudeGeometry(sh, { depth: 1, bevelEnabled: false, curveSegments: 4 });
+  g.computeVertexNormals();
+  return g;
 }

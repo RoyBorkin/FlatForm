@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 /**
  * Integral folding latches. Every shape is built in an edge-local frame:
  * s runs along the edge, n points out of the panel (n > 0 is outside).

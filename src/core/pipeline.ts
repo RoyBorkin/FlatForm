@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 /**
  * The geometry pipeline, stage by stage. Each stage is keyed by a hash of
  * exactly the inputs it depends on, so changing the sheet size never
@@ -6,6 +7,7 @@
 import type { MeshData, MethodResult, NestResult } from './types';
 import type { ProjectParams, ShapeParams, SurfaceParams } from './params';
 import { stageKeys } from './keys';
+import { effectiveSheet } from './manufacturing/manufacturing';
 import { skeletonToMesh } from './modeling/skeleton';
 import { primitiveToMesh } from './modeling/primitives';
 import { bbox, transformMesh, translateMesh, triCount } from './mesh/mesh';
@@ -16,6 +18,12 @@ import { buildLattice } from './lattice/lattice';
 import { buildSlices } from './slices/slices';
 import { buildWaffle } from './waffle/waffle';
 import { buildFolded } from './folded/folded';
+import { buildPapercraft, buildMinimal, buildFlexHinge } from './unfold/methods';
+import { buildLayers } from './sections/layers';
+import { buildClassic } from './sections/classic';
+import { buildMeshLines } from './frame/meshlines';
+import { buildTriangles } from './frame/triangles';
+import { applyManufacturing } from './manufacturing/manufacturing';
 import { nestParts } from './nest/nest';
 import type { V3 } from './math/vec';
 
@@ -73,19 +81,38 @@ export function prepareSurface(base: MeshData, s: SurfaceParams, progress?: Prog
 }
 
 export function runMethod(surface: MeshData, p: ProjectParams, progress?: ProgressFn): MethodResult {
+  return applyManufacturing(buildMethod(surface, p, progress), p);
+}
+
+function buildMethod(surface: MeshData, p: ProjectParams, progress?: ProgressFn): MethodResult {
   const on = (f: number, st: string) => progress?.(st, f);
+  const common = { surface, joinery: p.joinery, material: p.material, sheet: effectiveSheet(p), onProgress: on };
   switch (p.method) {
     case 'lattice':
-      return buildLattice({ surface, params: p.lattice, joinery: p.joinery, material: p.material, sheet: p.sheet, onProgress: on });
+      return buildLattice({ ...common, params: p.lattice });
     case 'slices':
       return buildSlices(surface, p.slices, p.joinery, p.material, on);
     case 'waffle':
       return buildWaffle(surface, p.waffle, p.material, on);
     case 'folded':
-      return buildFolded({ surface, params: p.folded, joinery: p.joinery, material: p.material, sheet: p.sheet, onProgress: on });
+      return buildFolded({ ...common, params: p.folded });
+    case 'papercraft':
+      return buildPapercraft({ ...common, params: p.papercraft });
+    case 'minimal':
+      return buildMinimal({ ...common, params: p.minimal });
+    case 'flexhinge':
+      return buildFlexHinge({ ...common, params: p.flexhinge });
+    case 'layers':
+      return buildLayers(surface, p.layers, p.joinery, p.material, on);
+    case 'meshlines':
+      return buildMeshLines(surface, p.meshlines, p.joinery, p.material, on);
+    case 'triangles':
+      return buildTriangles({ ...common, params: p.triangles });
+    case 'classic':
+      return buildClassic(surface, p.classic, p.material, on);
   }
 }
 
 export function runNest(method: MethodResult, p: ProjectParams, progress?: ProgressFn): NestResult {
-  return nestParts({ parts: method.parts, sheet: p.sheet, nest: p.nest, onProgress: (f) => progress?.('Nesting', f) });
+  return nestParts({ parts: method.parts, sheet: effectiveSheet(p), nest: p.nest, onProgress: (f) => progress?.('Nesting', f) });
 }

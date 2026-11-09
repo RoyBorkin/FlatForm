@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 import type { Path2 } from '../types';
 import { difference, offsetPolygons, strokePaths, union } from '../polygon/polygon';
 import { basisMatrix, type M4 } from '../math/vec';

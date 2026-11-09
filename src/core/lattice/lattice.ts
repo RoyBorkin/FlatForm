@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 /**
  * Branching lattice — the reference workflow:
  *   surface → graph pattern → clusters → spanning-tree "maze" per cluster

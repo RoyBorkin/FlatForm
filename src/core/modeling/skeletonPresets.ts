@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 import type { SkeletonParams } from '../params';
 import { tableBaseSkeleton } from '../defaults';
 

@@ -1,4 +1,5 @@
-//! Sheetform desktop shell. All geometry runs in the web front end (WASM and
+// FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT
+//! FlatForm desktop shell. All geometry runs in the web front end (WASM and
 //! Web Workers); the native side only provides file dialogs and file access.
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -7,5 +8,5 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .run(tauri::generate_context!())
-        .expect("error while running Sheetform");
+        .expect("error while running FlatForm");
 }

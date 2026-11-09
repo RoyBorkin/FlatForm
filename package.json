@@ -1,8 +1,14 @@
 {
-  "name": "sheetform",
+  "name": "flatform",
   "private": true,
-  "version": "0.1.0",
-  "description": "Turn any 3D shape into flat sheet parts you can cut, number and assemble.",
+  "version": "0.2.0",
+  "description": "Turn any 3D shape into flat sheet parts you can laser-cut, CNC-route or 3D-print, number and assemble.",
+  "author": {
+    "name": "Roy Borkin",
+    "email": "royborkin@gmail.com",
+    "url": "https://royborkin.github.io/"
+  },
+  "homepage": "https://royborkin.github.io/",
   "type": "module",
   "license": "MIT",
   "scripts": {

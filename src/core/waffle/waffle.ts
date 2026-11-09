@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 /** Interlocking waffle: two crossing families of ribs joined by half-slots. */
 import type { MeshData, MethodResult, Part2D, Path2, Polyline2 } from '../types';
 import type { MaterialParams, WaffleParams } from '../params';

@@ -1,7 +1,8 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 import { create } from 'zustand';
 import { temporal } from 'zundo';
 import type { ProjectParams } from '@/core/params';
-import { defaultProject } from '@/core/defaults';
+import { defaultProject, withDefaults } from '@/core/defaults';
 
 interface ProjectStore {
   project: ProjectParams;
@@ -10,14 +11,14 @@ interface ProjectStore {
   replace: (p: ProjectParams) => void;
 }
 
-const AUTOSAVE_KEY = 'sheetform.autosave.v1';
+const AUTOSAVE_KEY = 'flatform.autosave.v1';
 
 function loadAutosave(): ProjectParams {
   try {
     const raw = localStorage.getItem(AUTOSAVE_KEY);
     if (raw) {
       const p = JSON.parse(raw) as ProjectParams;
-      if (p && p.version === 1) return { ...defaultProject(), ...p };
+      if (p && p.version === 1) return withDefaults(p);
     }
   } catch {
     /* private mode or corrupted: start fresh */

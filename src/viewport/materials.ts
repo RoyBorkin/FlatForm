@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 import { Color, DoubleSide, MeshPhysicalMaterial, MeshStandardMaterial } from 'three';
 import type { MaterialParams } from '@/core/params';
 

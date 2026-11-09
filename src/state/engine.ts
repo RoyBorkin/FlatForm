@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 /**
  * Drives the geometry worker. Whenever the project changes it recomputes the
  * pipeline in three passes (surface → parts → sheets) so the viewport updates

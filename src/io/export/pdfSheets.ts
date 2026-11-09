@@ -1,5 +1,7 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 /** One PDF page per sheet at 1:1 scale, same layers and colours as the SVG. */
 import { jsPDF } from 'jspdf';
+import { APP_NAME, AUTHOR, AUTHOR_EMAIL, COPYRIGHT_LINE } from '@/brand';
 import type { SheetDrawing } from '@/core/export/sheetGeometry';
 import type { Path2 } from '@/core/types';
 
@@ -13,7 +15,7 @@ function drawPath(doc: jsPDF, p: Path2, H: number, closed: boolean) {
 export function sheetsPdf(sheets: SheetDrawing[], stroke: number, frame: boolean, title: string): Blob {
   const first = sheets[0];
   const doc = new jsPDF({ unit: 'mm', format: [first?.width ?? 210, first?.height ?? 297], orientation: (first?.width ?? 1) >= (first?.height ?? 1) ? 'landscape' : 'portrait', compress: true });
-  doc.setProperties({ title, creator: 'Sheetform' });
+  doc.setProperties({ title, creator: APP_NAME, author: `${AUTHOR} (${AUTHOR_EMAIL})`, subject: COPYRIGHT_LINE });
   sheets.forEach((s, i) => {
     if (i > 0) doc.addPage([s.width, s.height], s.width >= s.height ? 'landscape' : 'portrait');
     const H = s.height;
@@ -36,6 +38,7 @@ export function sheetsPdf(sheets: SheetDrawing[], stroke: number, frame: boolean
     for (const p of s.cutInner) drawPath(doc, p, H, true);
     doc.setDrawColor(255, 0, 0);
     for (const p of s.cutOuter) drawPath(doc, p, H, true);
+    for (const p of s.cutOuterOpen) drawPath(doc, p, H, false);
   });
   return doc.output('blob');
 }

@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 import type { M4, V2, V3 } from './math/vec';
 
 /** Indexed triangle mesh. Units are millimetres everywhere in the core. */
@@ -97,6 +98,8 @@ export interface Assembly3D {
   panels?: { positions: Float32Array; island: Uint32Array; normals: Float32Array };
   /** Connector placements in 3D for preview: centre xyz + axis xyz. */
   connectors?: Float32Array;
+  /** Printed layer spacers: start xyz, end xyz per spacer (6 floats); size = outer width. */
+  spacers?: { data: Float32Array; size: number; shape: 'round' | 'square' | 'hex' | 'star' };
 }
 
 export interface MethodResult {
@@ -107,6 +110,8 @@ export interface MethodResult {
     clusters?: { faceCluster: Int32Array; group: number }[];
     graphLines?: Float32Array; // xyz pairs
     treeLines?: { group: number; lines: Float32Array }[];
+    /** Guide curve (layers / classic along a curve), as xyz pairs. */
+    guide?: Float32Array;
   };
   stats: Record<string, number>;
   warnings: string[];
@@ -121,6 +126,13 @@ export interface MethodResult {
     bracketAngles?: number[];
     /** Waffle crossings that can take a cross clip. */
     crossings?: number;
+    /** Layer spacers grouped by length (mm). */
+    spacers?: { length: number; count: number }[];
+    spacerShape?: 'round' | 'square' | 'hex' | 'star';
+    spacerSize?: number;
+    spacerBore?: number;
+    /** Node hub channel cross-section when it is not a lattice strip stack. */
+    hubChannel?: { width: number; height: number };
   };
 }
 

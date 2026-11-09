@@ -1,5 +1,7 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 import { useEffect, useState } from 'react';
 import { useUI } from '@/state/ui';
+import { legible } from '@/themes/legible';
 
 /** Apply world, mode and layer colours to the document root as data attributes and CSS variables. */
 export function useTheme() {
@@ -16,7 +18,8 @@ export function useTheme() {
     const mode = settings.mode === 'system' ? (systemDark ? 'dark' : 'light') : settings.mode;
     root.dataset.world = settings.world;
     root.dataset.mode = mode;
-    settings.layerColors[settings.world].forEach((c, i) => root.style.setProperty(`--layer-${i}`, c));
+    settings.layerColors[settings.world].forEach((c, i) => root.style.setProperty(`--layer-${i}`, legible(c, mode)));
+    if (useUI.getState().resolvedMode !== mode) useUI.setState({ resolvedMode: mode });
     const meta = document.querySelector('meta[name="theme-color"]');
     requestAnimationFrame(() => meta?.setAttribute('content', getComputedStyle(root).getPropertyValue('--bg').trim()));
   }, [settings, systemDark]);

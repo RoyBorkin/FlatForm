@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Bounds, useBounds } from '@react-three/drei';
 import { useEffect, useMemo, useState } from 'react';

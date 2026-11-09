@@ -1,12 +1,13 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 import { Settings as Cog } from 'lucide-react';
 import { useProject } from '@/state/project';
 import { useResults } from '@/state/results';
 import { useUI, type StepId } from '@/state/ui';
 import { pinHoleDiameter } from '@/core/joinery/holes';
 import { useUnits } from '../components/controls';
+import { JOIN_LABEL, METHOD_NAME, PROCESS_LABEL } from '../labels';
+import { AUTHOR, AUTHOR_EMAIL, AUTHOR_URL, COPYRIGHT } from '@/brand';
 
-const METHOD_NAMES = { lattice: 'Branching lattice', slices: 'Stacked slices', waffle: 'Interlocking waffle', folded: 'Folded panels' } as const;
-const JOIN_NAMES = { screws: 'Screws', printed: 'Printed connectors', none: 'Plain holes', latches: 'Folding latches' } as const;
 
 /** The build order is the navigation. Each step shows its live result. */
 export function PipelineRail() {
@@ -32,7 +33,7 @@ export function PipelineRail() {
     {
       id: 'method',
       title: 'Method',
-      summary: `${METHOD_NAMES[p.method]}${parts ? ` · ${parts} parts` : ''}`,
+      summary: `${METHOD_NAME[p.method]}${parts ? ` · ${parts} parts` : ''}`,
       state: r.stale.method ? 'busy' : r.method?.warnings.length ? 'warn' : r.method ? 'ok' : 'idle',
     },
     {
@@ -41,10 +42,17 @@ export function PipelineRail() {
       summary:
         p.joinery.kind === 'latches'
           ? `Latches · ${p.joinery.latch.kind}`
-          : `${JOIN_NAMES[p.joinery.kind]}${pinHoleDiameter(p.joinery) ? ` · Ø${u.fmt(pinHoleDiameter(p.joinery))}` : ''}`,
+          : p.joinery.kind === 'fingers' || p.joinery.kind === 'flaticulation'
+            ? JOIN_LABEL[p.joinery.kind]
+            : `${JOIN_LABEL[p.joinery.kind]}${pinHoleDiameter(p.joinery) ? ` · Ø${u.fmt(pinHoleDiameter(p.joinery))}` : ''}`,
       state: 'ok',
     },
-    { id: 'material', title: 'Material & sheet', summary: `${p.material.thickness} mm · ${p.sheet.width}×${p.sheet.height}`, state: 'ok' },
+    {
+      id: 'material',
+      title: 'Material & making',
+      summary: `${PROCESS_LABEL[p.manufacturing.process]} · ${u.fmt(p.material.thickness)}${p.manufacturing.process === 'print3d' ? '' : ` · ${u.fmt(p.sheet.width, u.unit === 'mm' ? 0 : undefined, false)}×${u.fmt(p.sheet.height, u.unit === 'mm' ? 0 : undefined)}`}`,
+      state: 'ok',
+    },
     {
       id: 'nest',
       title: 'Nest',
@@ -80,6 +88,9 @@ export function PipelineRail() {
           <span className="rail__summary">Look, colours, units</span>
         </span>
       </button>
+      <a className="rail__credit" href={AUTHOR_URL} target="_blank" rel="noreferrer" title={`${AUTHOR} · ${AUTHOR_EMAIL}`}>
+        {COPYRIGHT}
+      </a>
     </nav>
   );
 }

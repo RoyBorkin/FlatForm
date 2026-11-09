@@ -1,3 +1,4 @@
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
 /*
  * Design tokens. Layout and components read only these variables; the three
  * worlds and two modes redefine them. Default = Model shop, dark.
