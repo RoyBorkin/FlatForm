@@ -54,20 +54,20 @@ The *Desktop release* workflow builds, on GitHub's machines:
 
 | File | For |
 |---|---|
-| `FlatForm_1.1.0_x64_en-US.msi` | Windows installer (Windows 10/11) |
-| `FlatForm_1.1.0_x64-setup.exe` | Windows installer, alternative format |
-| `FlatForm_1.1.0_universal.dmg` | macOS 11 or later, Apple silicon and Intel |
+| `FlatForm_1.1.2_x64_en-US.msi` | Windows installer (Windows 10/11) |
+| `FlatForm_1.1.2_x64-setup.exe` | Windows installer, alternative format |
+| `FlatForm_1.1.2_universal.dmg` | macOS 11 or later, Apple silicon and Intel |
 | `FlatForm_universal.app.tar.gz` | The bare macOS app (for updaters; most people want the `.dmg`) |
 
 ### Make the first release
 
 1. On github.com open the **Actions** tab → **Desktop release** (left) → **Run workflow** → **Run workflow**.
-   The release is named after the version in `src-tauri/tauri.conf.json` (now `1.1.0`), and the workflow creates the tag `v1.1.0` for you. No tags are needed in GitHub Desktop.
+   The release is named after the version in `src-tauri/tauri.conf.json` (now `1.1.2`), and the workflow creates the tag `v1.1.2` for you. No tags are needed in GitHub Desktop.
 2. Two jobs run side by side: *windows-latest* and *macos-latest*. The first run takes about 15–25 minutes; later runs are faster thanks to caching.
-3. When both are green, open **Releases** (right-hand side of the repository's main page). You will find a **draft** called *FlatForm v1.1.0* with the files attached and install notes already written.
+3. When both are green, open **Releases** (right-hand side of the repository's main page). You will find a **draft** called *FlatForm v1.1.2* with the files attached and install notes already written.
 4. Click the pencil icon, check the text, and press **Publish release**. Drafts are invisible to the public until you do this.
 
-**If a release run failed and you want to try again with the same version:** on github.com delete the draft under **Releases** (if one was made), then open **Tags**, click `v1.1.0` → **Delete**. Then run the workflow again. Otherwise the new run reuses the old tag, which points at the old code.
+**If a release run failed and you want to try again with the same version:** on github.com delete the draft under **Releases** (if one was made), then open **Tags**, click `v1.1.2` → **Delete**. Then run the workflow again. Otherwise the new run reuses the old tag, which points at the old code.
 
 The README's *Download for Windows / macOS* link points to `releases/latest`, so it always opens the newest published release.
 
@@ -92,17 +92,17 @@ These notes are included in every release's description.
 ## 5. Publishing an update
 
 1. Change the files (or replace them with a new version from Claude), and check the app locally if you like (`npm run dev`).
-2. Raise the version in three places, all to the same number, e.g. `1.1.0` → `1.2.0`:
+2. Raise the version in three places, all to the same number, e.g. `1.1.2` → `1.2.0`:
    - `package.json` → `"version"`
    - `src-tauri/tauri.conf.json` → `"version"`
    - `src-tauri/Cargo.toml` → `version = "…"`
 
    Or let a script do it: in GitHub Desktop choose **Repository → Open in Command Prompt** (Windows) / **Open in Terminal** (macOS) and run `npm run version:set 1.2.0` (needs Node.js from <https://nodejs.org> and `npm install` once).
-3. In GitHub Desktop, the **Changes** tab lists every changed file. Type a summary bottom-left (e.g. *FlatForm 1.1.0*), click **Commit to main**, then **Push origin** in the top bar.
+3. In GitHub Desktop, the **Changes** tab lists every changed file. Type a summary bottom-left (e.g. *FlatForm 1.2.0*), click **Commit to main**, then **Push origin** in the top bar.
    The web app updates by itself within a few minutes (*Actions → Deploy web app to GitHub Pages*).
 4. For new installers: *Actions → Desktop release → Run workflow*, then publish the draft release as in step 4.
 
-Versions must go up (1.0.0 → 1.0.1 → 1.1.0 → 1.2.0 …). The Windows installer refuses to install an older or identical version over a newer one, and a release run for a version that already has a tag reuses that old tag.
+Versions must go up (1.0.0 → 1.0.1 → 1.1.0 → 1.1.2 → 1.2.0 …). The Windows installer refuses to install an older or identical version over a newer one, and a release run for a version that already has a tag reuses that old tag.
 
 ## 6. If something goes wrong
 

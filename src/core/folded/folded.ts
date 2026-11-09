@@ -10,8 +10,13 @@ import { remesh, edgeLengthForTriangles } from '../mesh/remesh';
 import { unfold } from '../unfold/unfold';
 import { buildPanelParts, oversizeWarning } from '../unfold/panels';
 import { flaticulationFold, foldLine } from '../joinery/edgeFeatures';
+import { addCuts, bendRelief, hingeFill } from '../joinery/hinges';
+import { edgeContext } from '../unfold/unfold';
+import { difference, intersection, offsetPolygons, strokePaths, union } from '../polygon/polygon';
+import type { Path2 } from '../types';
+import type { V2 } from '../math/vec';
 import { AngleCounter, seamFeature, seamLabelInset } from '../joinery/seams';
-import { panelJunctions } from '../joinery/junction';
+import { hubPanelConfig, panelJunctions } from '../joinery/junction';
 import { getV } from '../math/vec';
 
 export interface FoldedInput {
@@ -40,6 +45,8 @@ export function buildFolded(input: FoldedInput): MethodResult {
   const bracketAngles: number[] = [];
   let pinPairs = 0;
   let flatJoints = 0;
+  let reliefFolds = 0, hingeFolds = 0;
+  const minA = (P.hinge.minAngle * Math.PI) / 180;
   const { parts, assembly } = buildPanelParts(
     U,
     {
@@ -54,8 +61,44 @@ export function buildFolded(input: FoldedInput): MethodResult {
               flaticulationFold(ctx, F, J.flaticulation);
               flatJoints++;
             }
-          : (ctx, F) => foldLine(ctx, F, P.foldLine, P.perforation),
-      vertexRelief: hubs ? (v) => hubs.relief.get(v) ?? 0 : undefined,
+          : P.foldLine === 'relief'
+            ? (ctx, F) => {
+                bendRelief(ctx, F, P.relief);
+                reliefFolds++;
+              }
+            : P.foldLine === 'hinge'
+              ? (ctx, F) => {
+                  // Gentle folds stay scored; the rest get a hinge band (filled per island below).
+                  if (ctx.foldAngle < minA) foldLine(ctx, F, 'score');
+                }
+              : (ctx, F) => foldLine(ctx, F, P.foldLine as 'score' | 'perforate', P.perforation),
+      island:
+        P.foldLine === 'hinge' && J.kind !== 'flaticulation'
+          ? (_i, faces, region, F) => {
+              const faceSet = new Set(faces);
+              const bands: { poly: Path2[]; dir: V2; w: number }[] = [];
+              for (const f of faces)
+                for (let k = 0; k < 3; k++) {
+                  const ctx = edgeContext(U, f, k, t);
+                  if (ctx.g < 0 || !faceSet.has(ctx.g) || f > ctx.g || !U.isFold(ctx.e) || ctx.foldAngle < minA) continue;
+                  const half = Math.max(P.hinge.spacing * 2, (ctx.foldAngle * P.hinge.bendRadius) / 2);
+                  bands.push({ poly: strokePaths([[ctx.A, ctx.B]], half, 'miter', 'butt'), dir: ctx.u, w: ctx.foldAngle * ctx.len });
+                }
+              if (!bands.length) return;
+              const keep = offsetPolygons(region, -Math.max(P.hinge.bridge * 1.5, t));
+              let used: Path2[] = [];
+              // Each fold gets a band of cuts along its own line; sharper folds claim shared corners first.
+              for (const b of bands.sort((x, y) => y.w - x.w)) {
+                let zone = intersection(b.poly, keep);
+                if (used.length) zone = difference(zone, used);
+                if (!zone.length) continue;
+                addCuts(F, hingeFill(zone, b.dir, P.hinge));
+                used = union([...used, ...zone]);
+                hingeFolds++;
+              }
+            }
+          : undefined,
+      ...hubPanelConfig(hubs),
       seam: seamFeature(J, {
         glueTabWidth: P.tabs === 'glue' ? P.tabWidth : 0,
         onClip: (_c, n, a) => clips.add(a, n),
@@ -74,12 +117,16 @@ export function buildFolded(input: FoldedInput): MethodResult {
   );
   input.onProgress?.(0.9, 'Joinery');
   oversizeWarning(parts, W, H, warnings);
+  if (P.foldLine === 'relief' && J.kind !== 'flaticulation') {
+    if (material.minBendRadius === 0 || /acrylic|mdf|plywood/i.test(material.name)) warnings.push(`${material.name} cracks when bent. Bend relief suits sheet metal, polypropylene and thick card.`);
+  }
+  if (P.foldLine === 'hinge' && t > 6) warnings.push('Living hinges work best in 2–6 mm plywood, MDF or acrylic.');
   if (J.kind === 'flaticulation' && t < 1.5) warnings.push('Flaticulation needs a stiff board (the paper used 3 mm MDF). Thin sheet will not clutch.');
   return {
     parts,
     assembly: { ...assembly, connectors: new Float32Array(connectors), hubs: hubs?.junctions.length ? new Float32Array(hubs.junctions.flatMap((h) => [...h.pos, h.core + J.junction.wall])) : undefined },
     overlays: {},
-    stats: { faces: m.indices.length / 3, islands: U.islands.length, cutEdges: U.seams, flaticulated: flatJoints },
+    stats: { faces: m.indices.length / 3, islands: U.islands.length, cutEdges: U.seams, flaticulated: flatJoints, reliefFolds, hingeFolds },
     warnings,
     connectorData: {
       pinCount: hubs ? hubs.junctions.length : pinPairs * 2,

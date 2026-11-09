@@ -28,7 +28,7 @@ import { charts } from '../unfold/methods';
 import { buildPanelParts, oversizeWarning } from '../unfold/panels';
 import { foldLine, type EdgeCtx, type Features } from '../joinery/edgeFeatures';
 import { AngleCounter, seamFeature, seamLabelInset } from '../joinery/seams';
-import { panelJunctions } from '../joinery/junction';
+import { hubPanelConfig, panelJunctions, type PanelHubs } from '../joinery/junction';
 
 export interface StackInput {
   surface: MeshData;
@@ -403,12 +403,11 @@ function shells(input: StackInput): MethodResult {
       break;
     }
     const U = unfold(m, { strategy: 'flattest', maxIslandFaces: 300, autoSplit: true, sheetW: W, sheetH: H, pad: 8 });
-    let relief: Map<number, number> | undefined;
+    let hubs: PanelHubs | null = null;
     if (J.kind === 'junction') {
-      const res = panelJunctions(U, J.junction, t);
-      res.junctions.forEach((h) => (h.id = `${String.fromCharCode(65 + k)}-${h.id}`));
-      junctions.push(...res.junctions);
-      relief = res.relief;
+      hubs = panelJunctions(U, J.junction, t);
+      hubs.junctions.forEach((h) => (h.id = `${String.fromCharCode(65 + k)}-${h.id}`));
+      junctions.push(...hubs.junctions);
     }
     results.push(
       buildPanelParts(
@@ -423,7 +422,7 @@ function shells(input: StackInput): MethodResult {
           labelInset: seamLabelInset(J, t),
           fold: (ctx, F) => foldLine(ctx, F, 'score'),
           seam: seamFeature(J, { glueTabWidth: J.kind === 'none' ? 8 : 0, onClip: (_c, n, a) => clips.add(a, n) }),
-          vertexRelief: relief ? (v) => relief!.get(v) ?? 0 : undefined,
+          ...hubPanelConfig(hubs),
         },
         warnings,
       ),

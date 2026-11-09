@@ -2,6 +2,7 @@
 import { Shuffle } from 'lucide-react';
 import { useProject } from '@/state/project';
 import type { FlexHingeParams, MinimalParams, PapercraftParams } from '@/core/params';
+import { HingeFields } from './HingeControls';
 import { Callout, IconButton, NumberField, Section, SegmentedField, SelectField, SliderField, SwitchField } from '../../components/controls';
 
 export function PapercraftControls() {
@@ -111,23 +112,22 @@ export function FlexHingeControls() {
   const P = useProject((s) => s.project.flexhinge);
   const update = useProject((s) => s.update);
   const set = (fn: (x: FlexHingeParams) => void) => update((p) => fn(p.flexhinge));
+  const t = useProject((s) => s.project.material.thickness);
   return (
     <>
       <PieceControls P={P} set={set} note="For rigid sheet: plywood, MDF, acrylic. Every fold that bends gets a band of slits so the board can follow the curve." />
       <Section title="Living hinge">
+        <HingeFields P={P} set={(fn) => set((x) => fn(x))} thickness={t} halfWidth={(P.bendRadius * 0.5) / 2 + P.spacing * 2} />
         <SegmentedField
-          label="Pattern"
-          value={P.pattern}
-          onChange={(v) => set((x) => void (x.pattern = v))}
+          label="Cut direction"
+          hint="One direction per piece suits cylinders and cones. Following each fold bends over domes and saddles (curved laser-bent wood)."
+          value={P.align}
+          onChange={(v) => set((x) => void (x.align = v))}
           options={[
-            { value: 'straight', label: 'Straight' },
-            { value: 'wave', label: 'Wave' },
-            { value: 'zigzag', label: 'Zig-zag' },
+            { value: 'piece', label: 'One per piece' },
+            { value: 'fold', label: 'Follow each fold' },
           ]}
         />
-        <SliderField label="Slit length" value={P.cutLength} min={3} max={80} step={0.5} unit="len" onChange={(v) => set((x) => void (x.cutLength = v))} />
-        <SliderField label="Bridge" hint="Uncut material between slits. Smaller bends easier and breaks sooner." value={P.bridge} min={0.5} max={20} step={0.1} unit="len" onChange={(v) => set((x) => void (x.bridge = v))} />
-        <SliderField label="Row spacing" hint="About the sheet thickness or a little less." value={P.spacing} min={0.4} max={10} step={0.05} unit="len" onChange={(v) => set((x) => void (x.spacing = v))} />
         <SliderField label="Hinge folds above" value={P.minAngle} min={0} max={60} step={0.5} unit="°" onChange={(v) => set((x) => void (x.minAngle = v))} />
         <SliderField label="Bend radius" hint="Band width grows with the fold angle times this radius." value={P.bendRadius} min={2} max={120} step={0.5} unit="len" onChange={(v) => set((x) => void (x.bendRadius = v))} />
       </Section>

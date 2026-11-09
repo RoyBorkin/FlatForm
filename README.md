@@ -57,10 +57,14 @@ It started from the "organic shape to fabrication" workflow, usually built as a 
 | Sections | **Interlocking waffle** | Two families of ribs with half-slots, fit clearance and lead-in chamfers, each slot labelled with its mating rib. |
 | Sections | **Stacked layers** | Shapes stacked one on top of another, in four modes: **layered relief** (silhouettes from any view direction, like a topographic model), **solid stack** (touching sections through the whole shape), **laminated skins** (several surface skins glued and pinned over one another) and **nested shells** (offset copies of the shell, one inside the next). Held by bend tabs, rods, pins or any seam joinery. |
 | Sections | **Classic slot model** | The classic laser-cut model in three styles: **grid** (two rib families in any plane, rotatable), **revolve** (profiles fanned around the axis, sliding into open rings) and **along a curve** (ribs square to a spine curve, on one to three spines). Slots open the same way for every pair, so parts slide together. |
-| Folded | **Folded panels** | A faceted unfold; folds scored, perforated or cut as Flaticulation joints; cut edges numbered and joined. |
+| Folded | **Folded panels** | A faceted unfold; folds scored, perforated, cut with **bend relief** (for bending sheet metal by hand), cut as **living hinges** (rigid board bends into a curve at each fold) or cut as Flaticulation joints; cut edges numbered and joined. |
 | Folded | **Paper-craft** | Pepakura-style pieces with glue flaps (alternate, one side, both or none; trapezoid, rounded or triangle), mountain/valley fold lines, edge numbers and piece names. |
 | Folded | **Minimal joinery** | A few large pieces of **flexible** sheet (felt, fabric, leather, thin plastic). Each piece is flattened in one go with least-squares conformal maps, so it may stretch a little instead of being cut up; tubes and rings are split until every piece lies flat. Seams are laced. |
-| Folded | **Flex hinges** | The same few large pieces in **rigid** sheet (plywood, MDF, acrylic): every fold that bends gets a band of living-hinge slits (straight, wave or zig-zag) aligned with the bend. |
+| Folded | **Flex hinges** | The same few large pieces in **rigid** sheet (plywood, MDF, acrylic): every fold that bends gets a band of living hinge in one of **12 patterns**, either one direction per piece or following each fold (curved laser-bent wood). |
+
+**Bending patterns**
+- **Bend relief** (folded panels), 6 patterns: hand-bend slots with angled tabs (after SendCutSend's hand-bend guide: slots about 0.5–0.7× the thickness, tabs at least the thickness, about six slots per bend), wave slots, round-end slots, holes, staggered slots, and slots with crack-stop holes. Optional round or square relief where a bend meets an edge or corner.
+- **Living hinges** (flex hinges and folded panels), 12 patterns: straight lines, rectangles, round-end slots, dog-bones, wave, zig-zag, chevron, serpentine, diamond lattice, honeycomb, crosses and triangles. Cut length, bridge, row spacing and slot width; each pattern is drawn by the same code that cuts it.
 
 **Joinery** (each method offers the kinds that make sense for it)
 - **Screws**: ISO 273 clearance holes for M2–M6, US #4–#8 and pop rivets, close/normal/loose fit, or a custom diameter.
@@ -69,7 +73,10 @@ It started from the "organic shape to fabrication" workflow, usually built as a 
 - **Folding latches**: tab & slot, arrowhead, hook and dovetail, fully parametric.
 - **Wire & lacing**: holes or slots for metal wire, string, fabric strip, rubber bands or zip ties; running, cross, whip or notch stitch; hole size, slot length, pitch and edge distance.
 - **Finger joints**: box joints along every seam, with depth corrected for the real angle between the parts. *Unique* and *symmetric* patterns code each seam so only the right parts fit (after FoolProofJoint, CHI ’22).
-- **Junction hubs**: a printed hub wherever parts meet at a point, with a round, square or slot socket (sticks, bars, strips) or a fork (panel corners, which are cut back to fit) at each member's real angle. Works with sticks, mesh lines, lattice nodes, triangles, folded panels, flex hinges and shells.
+- **Junction hubs**: a printed hub wherever parts meet at a point, with a round, square or slot socket (sticks, bars, strips) or a fork (panel corners, which are cut back to fit) at each member's real angle. Works with sticks, mesh lines, lattice nodes, triangles, folded panels, flex hinges and shells. Three versions:
+  - **Solid**: one piece with a round core; the strongest, but downward sockets need supports.
+  - **No supports**: one piece that prints without supports. Each sleeve stands on a fin that tapers at 45° to the bed, round sockets are 45° diamonds, stick hubs print upside down when most arms point down, and panel corners rest on shelves with a screw hole (the panels get matching holes).
+  - **Flat, bends**: a thin star-shaped plate whose arms bend along marked lines to each member's angle: panel arms fold about the line where the plate meets the panel, so they land flat on it and screw on; stick arms tie on through two slots. Printed thin in PETG or TPU with a V-groove at each bend, or cut from bendable sheet with the bends scored and the angles engraved.
 - **Crossing clips**: printed caps for each end of a slotted crossing (waffle, classic), shaped for that crossing's angle, or **collars** that grip the rod on both sides of every layer (slices, layers, stacks).
 - **Cardboard connectors**: printed U-channels that grip two sheet edges at the seam's angle, one file per angle; panels stop short of the seam and engraved marks show where each connector goes. After the open-source cardboard connector systems on Printables and MakerWorld.
 - **LEGO Technic**: Ø4.8 mm pin holes (or cross-shaped axle holes) on the 8 mm stud pitch, so parts join with real Technic pins and axles.
@@ -189,7 +196,8 @@ src/
     bricks/             LEGO voxel build and brick packing
     stack/              stacked layers: relief, solid, laminated skins, nested shells
     joinery/            hole sizes, latches, edge features (flaps, lacing, fingers), Flaticulation,
-                        junction hubs, bend tabs, cardboard and LEGO seams
+                        junction hubs (solid, support-free, flat), bend tabs, cardboard and LEGO seams,
+                        living hinges and bend relief
     manufacturing/      CNC reliefs, print beds, weight and time estimates
     connectors/         printed connectors and kits: hubs, clips, cardboard connectors, bricks (Manifold WASM)
     polygon/            Clipper wrapper: offsets, booleans, islands
@@ -235,6 +243,8 @@ Vite · React 19 · TypeScript · Three.js / React Three Fiber · Zustand + zund
 - Flaticulation's kerf table was measured on 3 mm MDF; calibrate K and α for other boards.
 - Junction hubs are made for each node's real angles. With **Share identical hubs** on, hubs whose angles agree to 1° print from one file, but a free-form shape usually has few repeats.
 - The LEGO build checks that every brick is connected, but not that the model can stand under its own weight; hollow builds with thin walls can be fragile. Printable bricks fit real LEGO on a well-tuned printer; print a 2×2 first.
+- Bend relief changes the bend radius and the flange length a little: do a test bend before cutting a whole kit.
+- Flat hub arms for sticks fold straight up or down; where a stick is far from that plane the arm needs a slight twist (the app warns above 20°).
 - Bend tabs crack in brittle sheet (acrylic, MDF): use them with metal, card, polypropylene or thin plywood.
 
 ## Licence

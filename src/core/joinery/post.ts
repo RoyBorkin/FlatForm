@@ -5,7 +5,9 @@ import type { ProjectParams } from '../params';
 import { LEGO_HOLE } from './holes';
 import { makeJunction } from './junction';
 import { difference, signedArea } from '../polygon/polygon';
-import { partArea } from '../parts';
+import { normalizePart, partArea } from '../parts';
+import { flatHub } from './flatHub';
+import { textPolylines } from '../text/hershey';
 
 /** LEGO Technic cross-axle hole (4.8 mm across, 1.8 mm arms), centred on (x, y). */
 export function axleHole(x: number, y: number, fit: number): Path2 {
@@ -29,6 +31,47 @@ export function applyJoinery(r: MethodResult, p: ProjectParams): MethodResult {
       return makeJunction(`N${hub.node}`, [0, 0, 0], [0, 0, 1], arms, J.junction);
     });
     r = { ...r, connectorData: { ...r.connectorData, junctions, pinCount: junctions.length } };
+  }
+  // Flat junction hubs can be cut from the sheet with the rest of the parts.
+  const hubs = r.connectorData?.junctions;
+  if (J.kind === 'junction' && J.junction.style === 'flat' && hubs?.length) {
+    const group = r.parts.reduce((g, q) => Math.max(g, q.group + 1), 0);
+    let maxTwist = 0;
+    const flat = hubs.map((h) => {
+      const fh = flatHub(h, J.junction);
+      maxTwist = Math.max(maxTwist, fh.maxTwist);
+      return { h, fh };
+    });
+    if (J.junction.flatOnSheet) {
+      const extra = flat.map(({ h, fh }) => {
+        const slots = fh.arms.flatMap((a) => a.slots);
+        const cut = slots.length ? difference(fh.outline, slots) : fh.outline;
+        const score = fh.arms.filter((a) => Math.abs(a.angle) >= 0.5).map((a) => ({ pts: a.bend, kind: a.angle > 0 ? ('valley' as const) : ('mountain' as const) }));
+        const th = Math.min(4, fh.rb * 0.5);
+        const engrave = th > 0.8 ? textPolylines(h.id, 0, 0, th, 0) : [];
+        // Bend angles, engraved beside each bend line.
+        for (const a of fh.arms) {
+          if (Math.abs(a.angle) < 0.5) continue;
+          const lbl = `${Math.round(Math.abs(a.angle))}`;
+          const q = a.start + 2.2 * th;
+          const ang = Math.atan2(a.dir[1], a.dir[0]);
+          engrave.push(...textPolylines(lbl, a.dir[0] * q, a.dir[1] * q, th * 0.7, Math.abs(ang) > Math.PI / 2 ? ang + Math.PI : ang));
+        }
+        return normalizePart({
+          id: `H${h.id}`,
+          group,
+          groupName: 'Hubs',
+          cut,
+          holes: fh.arms.flatMap((a) => a.holes),
+          score,
+          engrave,
+          meta: { hub: h.id, arms: h.arms.length, bends: fh.arms.map((a) => `${a.angle >= 0 ? '+' : ''}${a.angle.toFixed(0)}°`).join(' ') },
+        });
+      });
+      r = { ...r, parts: [...r.parts, ...extra] };
+      if (p.material.minBendRadius === 0) r = { ...r, warnings: [...r.warnings, `${p.material.name} does not bend: flat hubs cut from it will crack. Use metal, polypropylene or card, or print them.`] };
+    }
+    if (maxTwist > 20) r = { ...r, warnings: [...r.warnings, `Some flat hub arms meet their member at up to ${Math.round(maxTwist)}° of twist; they need a little coaxing to sit flat.`] };
   }
   // LEGO axles lock in cross-shaped holes.
   if (J.kind === 'lego' && J.lego.element === 'axle') {

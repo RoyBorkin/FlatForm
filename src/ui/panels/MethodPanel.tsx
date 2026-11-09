@@ -13,6 +13,7 @@ import { FlexHingeControls, MinimalControls, PapercraftControls } from './method
 import { ClassicControls, LayersControls } from './method/SectionControls';
 import { MeshLinesControls, TrianglesControls } from './method/FrameControls';
 import { BricksControls, StackControls, SticksControls } from './method/KitControls';
+import { HingeFields, ReliefFields } from './method/HingeControls';
 
 const FAMILIES = ['Surface', 'Frames', 'Sections', 'Folded'] as const;
 
@@ -302,6 +303,7 @@ function FoldedControls() {
   const join = useProject((s) => s.project.joinery.kind);
   const update = useProject((s) => s.update);
   const set = (fn: (x: FoldedParams) => void) => update((p) => fn(p.folded));
+  const t = useProject((s) => s.project.material.thickness);
   return (
     <>
       <Section title="Panels">
@@ -322,18 +324,28 @@ function FoldedControls() {
       <Section title="Folds & edges">
         <SegmentedField
           label="Fold lines"
-          hint="Score marks the surface; perforate cuts dashes through, for thick card and plastic."
+          hint="Score marks the surface. Perforate cuts dashes through (thick card, plastic). Relief cuts slots so sheet metal bends by hand. Hinge cuts a living hinge so rigid board bends into a curve."
           value={F.foldLine}
           onChange={(v) => set((x) => void (x.foldLine = v))}
           options={[
             { value: 'score', label: 'Score' },
             { value: 'perforate', label: 'Perforate' },
+            { value: 'relief', label: 'Relief' },
+            { value: 'hinge', label: 'Hinge' },
           ]}
         />
         {F.foldLine === 'perforate' && (
           <>
             <SliderField label="Dash" value={F.perforation.dash} min={0.5} max={20} step={0.5} unit="len" onChange={(v) => set((x) => void (x.perforation.dash = v))} />
             <SliderField label="Gap" value={F.perforation.gap} min={0.3} max={20} step={0.1} unit="len" onChange={(v) => set((x) => void (x.perforation.gap = v))} />
+          </>
+        )}
+        {F.foldLine === 'relief' && join !== 'flaticulation' && <ReliefFields P={F.relief} set={(fn) => set((x) => fn(x.relief))} thickness={t} />}
+        {F.foldLine === 'hinge' && join !== 'flaticulation' && (
+          <>
+            <HingeFields P={F.hinge} set={(fn) => set((x) => fn(x.hinge))} thickness={t} halfWidth={(0.5 * F.hinge.bendRadius) / 2 + F.hinge.spacing * 2} />
+            <SliderField label="Hinge folds above" hint="Gentler folds are just scored." value={F.hinge.minAngle} min={0} max={60} step={0.5} unit="°" onChange={(v) => set((x) => void (x.hinge.minAngle = v))} />
+            <SliderField label="Bend radius" hint="Each band is as wide as the fold angle times this radius." value={F.hinge.bendRadius} min={2} max={120} step={0.5} unit="len" onChange={(v) => set((x) => void (x.hinge.bendRadius = v))} />
           </>
         )}
         {join === 'flaticulation' && <p className="muted small">Folds are cut as Flaticulation joints (Joinery step). Seams between parts use latches.</p>}

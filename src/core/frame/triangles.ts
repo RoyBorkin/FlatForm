@@ -15,7 +15,8 @@ import { basisMatrix, cross3, dot3, getV, norm3, sub3, type V2, type V3 } from '
 import { circlePath, difference, interiorPoint, offsetPolygons, pointInRegion, regionArea, union } from '../polygon/polygon';
 import { emptyFeatures, type EdgeCtx } from '../joinery/edgeFeatures';
 import { AngleCounter, seamFeature, seamLabelInset } from '../joinery/seams';
-import { makeJunction } from '../joinery/junction';
+import { makeJunction, panelHoleDists } from '../joinery/junction';
+import { flatHub } from '../joinery/flatHub';
 import { textPolylines, textWidth } from '../text/hershey';
 import { normalizePart, partId } from '../parts';
 
@@ -149,6 +150,7 @@ export function buildTriangles(input: {
   // Junction hubs at every vertex grip the corners of the panels around it.
   const junctions: Junction[] = [];
   const relief = new Float64Array(m.positions.length / 3);
+  const cornerHole = new Map<string, number>(); // flat hubs: "face:vertex" → hole distance along the corner bisector
   if (J.kind === 'junction') {
     const around: number[][] = Array.from({ length: m.positions.length / 3 }, () => []);
     for (let f = 0; f < nt; f++) for (let k = 0; k < 3; k++) around[m.indices[f * 3 + k]].push(f);
@@ -167,7 +169,8 @@ export function buildTriangles(input: {
       });
       const h = makeJunction(`V${v + 1}`, p, nrm, arms, J.junction);
       junctions.push(h);
-      relief[v] = h.core + J.junction.clearance;
+      relief[v] = J.junction.style === 'flat' ? flatHub(h, J.junction).rb * 0.9 + J.junction.clearance : h.core + J.junction.clearance;
+      panelHoleDists(h, J.junction).forEach((d, i) => d && cornerHole.set(`${faces[i]}:${v}`, d));
     });
   }
   const parts: Part2D[] = [];
@@ -236,6 +239,16 @@ export function buildTriangles(input: {
       // Cut each corner back so the hub's fork can grip it.
       const cuts = [0, 1, 2].filter((k) => relief[vi[k]] > 0).map((k) => circlePath(tri[k][0], tri[k][1], relief[vi[k]], 32));
       if (cuts.length) region = difference(region, cuts);
+      // Flat hubs screw to the corner: a hole along the corner's bisector.
+      for (let k = 0; k < 3; k++) {
+        const dist = cornerHole.get(`${f}:${vi[k]}`);
+        if (!dist) continue;
+        const c = tri[k], a = tri[(k + 1) % 3], b = tri[(k + 2) % 3];
+        const la = Math.hypot(a[0] - c[0], a[1] - c[1]) || 1, lb = Math.hypot(b[0] - c[0], b[1] - c[1]) || 1;
+        const bx = (a[0] - c[0]) / la + (b[0] - c[0]) / lb, by = (a[1] - c[1]) / la + (b[1] - c[1]) / lb;
+        const l = Math.hypot(bx, by) || 1;
+        F.holes.push({ x: c[0] + (bx / l) * dist, y: c[1] + (by / l) * dist, r: J.junction.flatHole / 2 });
+      }
     }
     if (F.add.length) region = union([...region, ...F.add]);
     if (F.sub.length) region = difference(region, F.sub);

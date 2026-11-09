@@ -241,13 +241,37 @@ export interface WaffleParams {
   textHeight: number;
 }
 
+/** Living-hinge patterns (see core/joinery/hinges.ts). */
+export type HingePattern = 'straight' | 'rectangles' | 'obround' | 'bones' | 'wave' | 'zigzag' | 'chevron' | 'serpentine' | 'diamond' | 'hexagon' | 'cross' | 'triangles';
+
+export interface HingeParams {
+  pattern: HingePattern;
+  cutLength: number; // mm, length of each cut along the bend axis
+  bridge: number; // mm, uncut material between cuts in a row
+  spacing: number; // mm, distance between rows
+  slotWidth: number; // mm, width of cut-out patterns (rectangles, slots, lattice…)
+}
+
+/** Bend-relief patterns along a fold line. */
+export type ReliefPattern = 'slots' | 'wave' | 'obround' | 'holes' | 'staggered' | 'bones';
+
+export interface BendReliefParams {
+  pattern: ReliefPattern;
+  width: number; // slot width, × sheet thickness
+  tab: number; // tab width, × sheet thickness (at least 1)
+  slotLength: number; // mm, target slot length (the count follows the fold length)
+  endRelief: 'none' | 'round' | 'square';
+}
+
 export interface FoldedParams {
   targetFaces: number;
   strategy: 'flattest' | 'bfs' | 'longest';
   maxIslandFaces: number;
   autoSplit: boolean;
-  foldLine: 'score' | 'perforate';
+  foldLine: 'score' | 'perforate' | 'relief' | 'hinge';
   perforation: { dash: number; gap: number };
+  relief: BendReliefParams;
+  hinge: HingeParams & { bendRadius: number; minAngle: number };
   tabs: 'none' | 'glue';
   tabWidth: number; // mm
   numberEdges: boolean;
@@ -280,11 +304,9 @@ export interface MinimalParams {
   textHeight: number;
 }
 
-export interface FlexHingeParams extends MinimalParams {
-  pattern: 'straight' | 'wave' | 'zigzag';
-  cutLength: number; // mm, length of each slit
-  bridge: number; // mm, uncut material between slits
-  spacing: number; // mm, distance between slit rows
+export interface FlexHingeParams extends MinimalParams, HingeParams {
+  /** One cut direction per piece, or each band following its own fold (curved bending). */
+  align: 'piece' | 'fold';
   minAngle: number; // degrees: folds sharper than this get a hinge
   bendRadius: number; // mm: band width = fold angle × radius
 }
@@ -408,6 +430,17 @@ export interface JoineryParams {
     clearance: number; // mm, per side
     core: number; // mm, extra hub radius
     dedupe: boolean; // share one file between junctions with the same angles
+    /**
+     * solid: one piece with round core and sleeves (may need supports);
+     * printable: one piece that prints without supports: every sleeve stands on a 45° fin down to the bed, round sockets are 45° diamonds, panel corners rest on shelves (screwed or glued);
+     * flat: a thin star-shaped plate whose arms bend along marked lines to each member's angle (printed flexible, or cut from sheet).
+     */
+    style: 'solid' | 'printable' | 'flat';
+    flatThickness: number; // mm, flat hubs: plate thickness when printed
+    flatHinge: number; // mm, flat hubs: material left at each bend groove
+    flatTab: number; // mm, flat hubs: arm length past the bend
+    flatHole: number; // mm, flat and printable hubs: screw/rivet hole where a panel is held (0 = glue)
+    flatOnSheet: boolean; // flat hubs: also cut them from the sheet with the parts
   };
   /** Printed clips where parts cross (ribs) or a rod passes through a layer. */
   crossing: {

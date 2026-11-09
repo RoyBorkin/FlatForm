@@ -15,12 +15,13 @@ import { buildPanelParts, oversizeWarning } from './panels';
 import { edgeContext } from './unfold';
 import { foldLine, glueFlap, latches, wireStitches, type EdgeCtx, type Features } from '../joinery/edgeFeatures';
 import { AngleCounter, seamFeature, seamLabelInset } from '../joinery/seams';
-import { panelJunctions } from '../joinery/junction';
+import { hubPanelConfig, panelJunctions } from '../joinery/junction';
 import { seamBendTabs } from '../joinery/bendTabs';
 import { buildSurfaceGraph } from '../graph/graph';
 import { buildTopology } from '../mesh/mesh';
 import { clusterGraph } from '../graph/cluster';
-import { bounds, clipOpenPaths, offsetPolygons, strokePaths, union, intersection } from '../polygon/polygon';
+import { offsetPolygons, strokePaths, union, intersection, difference } from '../polygon/polygon';
+import { addCuts, hingeFill, hingeIsClosed } from '../joinery/hinges';
 import type { V2 } from '../math/vec';
 
 interface Common {
@@ -70,7 +71,7 @@ export function buildPapercraft(input: Common & { params: PapercraftParams }): M
       fold: (ctx, F) => {
         if (P.foldStyle === 'lines' && ctx.foldAngle > flat) foldLine(ctx, F, 'score');
       },
-      vertexRelief: pcHubs ? (v) => pcHubs.relief.get(v) ?? 0 : undefined,
+      ...hubPanelConfig(pcHubs),
       seam: (ctx, F) => {
         if (J.kind === 'latches') latches(ctx, F, J.latch);
         else if (J.kind === 'wire') wireStitches(ctx, F, J.wire);
@@ -225,40 +226,13 @@ export function buildMinimal(input: Common & { params: MinimalParams }): MethodR
 
 // ------------------------------------------------------------------ flex hinges
 
-/** Parallel slit rows across a region, along direction d (unit, 2D). */
-export function hingePattern(region: Path2[], d: V2, P: Pick<FlexHingeParams, 'pattern' | 'cutLength' | 'bridge' | 'spacing'>): Path2[] {
-  const b = bounds(region);
-  const cx = (b.minX + b.maxX) / 2, cy = (b.minY + b.maxY) / 2;
-  const R = Math.hypot(b.maxX - b.minX, b.maxY - b.minY) / 2 + P.cutLength;
-  const n: V2 = [-d[1], d[0]];
-  const rows = Math.ceil(R / P.spacing);
-  const lines: Path2[] = [];
-  const step = P.cutLength + P.bridge;
-  for (let r = -rows; r <= rows; r++) {
-    const off = r * P.spacing;
-    const shift = (Math.abs(r) % 2) * (step / 2);
-    for (let s = -R - shift; s < R; s += step) {
-      const a = s, e = s + P.cutLength;
-      const pts: V2[] = [];
-      const samples = P.pattern === 'straight' ? 1 : 8;
-      for (let i = 0; i <= samples; i++) {
-        const u = a + ((e - a) * i) / samples;
-        let w = 0;
-        if (P.pattern === 'wave') w = Math.sin(((u - a) / P.cutLength) * Math.PI * 2) * P.spacing * 0.3;
-        else if (P.pattern === 'zigzag') w = (i % 2 ? 1 : -1) * P.spacing * 0.28;
-        pts.push([cx + d[0] * u + n[0] * (off + w), cy + d[1] * u + n[1] * (off + w)]);
-      }
-      lines.push(pts);
-    }
-  }
-  return clipOpenPaths(lines, region);
-}
-
 export function buildFlexHinge(input: Common & { params: FlexHingeParams }): MethodResult {
   const { params: P, joinery: J, material, sheet } = input;
   const warnings: string[] = [];
   const t = material.thickness;
   if (t > 6) warnings.push('Living hinges work best in 2–6 mm plywood, MDF or acrylic.');
+  if (hingeIsClosed(P.pattern) && P.spacing - Math.min(2 * P.slotWidth, P.spacing * 0.9) < Math.max(0.6, t * 0.25))
+    warnings.push('The hinge cut-outs leave very thin webs between rows. Increase the row spacing or make the slots narrower.');
   const m = remesh(input.surface, { targetEdge: edgeLengthForTriangles(input.surface, P.targetFaces), iterations: 4 });
   input.onProgress?.(0.3, 'Pieces');
   const chart = charts(m, P.pieces, P.seed);
@@ -280,30 +254,43 @@ export function buildFlexHinge(input: Common & { params: FlexHingeParams }): Met
       pieceLabels: true,
       labelInset: seamLabelInset(J, t),
       seam: seamFeature(J, { glueTabWidth: 0, onClip: (_c, n, a) => clips.add(a, n) }),
-      vertexRelief: fhHubs ? (v) => fhHubs.relief.get(v) ?? 0 : undefined,
+      ...hubPanelConfig(fhHubs),
       island: (_i, faces, region, F: Features) => {
-        // Bands around every fold that needs bending, slit along the main bending direction.
+        // Bands around every fold that needs bending.
         const faceSet = new Set(faces);
-        const bands: Path2[] = [];
+        const bands: { poly: Path2[]; dir: V2; w: number }[] = [];
         let dx = 0, dy = 0;
         for (const f of faces)
           for (let k = 0; k < 3; k++) {
             const ctx = edgeContext(U, f, k, t);
             if (ctx.g < 0 || !faceSet.has(ctx.g) || f > ctx.g || !U.isFold(ctx.e) || ctx.foldAngle < minA) continue;
             const half = Math.max(P.spacing * 2, (ctx.foldAngle * P.bendRadius) / 2);
-            bands.push(...strokePaths([[ctx.A, ctx.B]], half, 'round', 'round'));
-            // Average axis (sign-free) weighted by how much it bends.
             const w = ctx.foldAngle * ctx.len;
+            bands.push({ poly: strokePaths([[ctx.A, ctx.B]], half, 'round', 'round'), dir: ctx.u, w });
+            // Average axis (sign-free) weighted by how much it bends.
             const ang = Math.atan2(ctx.u[1], ctx.u[0]) * 2;
             dx += Math.cos(ang) * w;
             dy += Math.sin(ang) * w;
           }
         if (!bands.length) return;
-        const axis = Math.atan2(dy, dx) / 2;
         const keep = offsetPolygons(region, -Math.max(P.bridge * 1.5, t));
-        const zone = intersection(union(bands), keep);
+        if (P.align === 'fold') {
+          // Curved bending: each band follows its own fold; stronger bends claim their area first.
+          let used: Path2[] = [];
+          for (const b of bands.sort((x, y) => y.w - x.w)) {
+            let zone = intersection(b.poly, keep);
+            if (used.length) zone = difference(zone, used);
+            if (!zone.length) continue;
+            addCuts(F, hingeFill(zone, b.dir, P));
+            used = union([...used, ...zone]);
+            hingeArea += zone.reduce((s, p) => s + Math.abs(areaOf(p)), 0);
+          }
+          return;
+        }
+        const axis = Math.atan2(dy, dx) / 2;
+        const zone = intersection(union(bands.flatMap((b) => b.poly)), keep);
         if (!zone.length) return;
-        for (const l of hingePattern(zone, [Math.cos(axis), Math.sin(axis)], P)) F.perforations.push({ pts: l });
+        addCuts(F, hingeFill(zone, [Math.cos(axis), Math.sin(axis)], P));
         hingeArea += zone.reduce((s, p) => s + Math.abs(areaOf(p)), 0);
       },
     },

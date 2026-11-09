@@ -225,10 +225,41 @@ export function JoineryPanel() {
                 ? 'One hub per node, with a socket for every stick, bar or strip at its real angle.'
                 : 'One hub at every corner where separate parts meet. Each part’s corner is cut back and slides into a fork.'}
             </p>
+            <SegmentedField
+              label="Version"
+              value={j.junction.style}
+              onChange={(v) => set((x) => void (x.junction.style = v))}
+              options={[
+                { value: 'solid', label: 'Solid' },
+                { value: 'printable', label: 'No supports' },
+                { value: 'flat', label: 'Flat, bends' },
+              ]}
+            />
+            <p className="muted small">
+              {j.junction.style === 'solid'
+                ? 'One piece with a round core. Strongest, but sockets that point down need supports.'
+                : j.junction.style === 'printable'
+                  ? 'One piece that prints without supports: each socket stands on a fin that tapers at 45° to the bed, round sockets are 45° diamonds, and panel corners rest on shelves and are screwed or glued. Uses a little more plastic.'
+                  : 'A thin star-shaped plate. Each arm bends along a marked groove to its member’s angle and is screwed to a panel or tied to a stick. Print it in PETG or TPU, or cut it from bendable sheet.'}
+            </p>
             <Suspense fallback={<div className="connector-preview connector-preview--loading">Loading preview…</div>}>
               <ConnectorPreview kit="junction" />
             </Suspense>
           </Section>
+          {j.junction.style === 'printable' && method !== 'sticks' && method !== 'meshlines' && method !== 'lattice' && (
+            <Section title="Shelves">
+              <SliderField label="Screw hole" hint="Through each shelf and the panel corner on it. 0 to glue." value={j.junction.flatHole} min={0} max={8} step={0.1} unit="len" onChange={(v) => set((x) => void (x.junction.flatHole = v))} />
+            </Section>
+          )}
+          {j.junction.style === 'flat' && (
+            <Section title="Flat hub">
+              <SliderField label="Arm length" hint="Past the bend line." value={j.junction.flatTab} min={6} max={60} step={0.5} unit="len" onChange={(v) => set((x) => void (x.junction.flatTab = v))} />
+              <SliderField label="Screw hole" hint="In arms that hold a panel; the panel gets a matching hole. 0 to glue." value={j.junction.flatHole} min={0} max={8} step={0.1} unit="len" onChange={(v) => set((x) => void (x.junction.flatHole = v))} />
+              <SliderField label="Printed thickness" value={j.junction.flatThickness} min={0.6} max={4} step={0.1} unit="len" onChange={(v) => set((x) => void (x.junction.flatThickness = v))} />
+              <SliderField label="Left at each bend" hint="A V-groove on the inside of every bend leaves this much to flex." value={j.junction.flatHinge} min={0.2} max={2} step={0.05} unit="len" onChange={(v) => set((x) => void (x.junction.flatHinge = v))} />
+              <SwitchField label="Cut them from the sheet too" hint="Adds the hubs to the sheet parts, bends scored. For metal, polypropylene or card." checked={j.junction.flatOnSheet} onChange={(v) => set((x) => void (x.junction.flatOnSheet = v))} />
+            </Section>
+          )}
           <Section title="Dimensions">
             <SliderField label="Socket depth" value={j.junction.socketDepth} min={3} max={60} step={0.5} unit="len" onChange={(v) => set((x) => void (x.junction.socketDepth = v))} />
             <SliderField label="Wall" value={j.junction.wall} min={0.8} max={6} step={0.1} unit="len" onChange={(v) => set((x) => void (x.junction.wall = v))} />

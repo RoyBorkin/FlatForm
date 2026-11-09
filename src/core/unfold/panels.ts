@@ -19,6 +19,8 @@ export interface PanelConfig {
   group?: number;
   /** Cut each part's corner back by this radius at a mesh vertex (junction hubs). */
   vertexRelief?: (v: number) => number;
+  /** Flat junction hubs: a screw hole this far from the corner, along the corner's bisector. */
+  vertexHole?: (v: number, island: number) => { dist: number; r: number } | undefined;
   /** Called for every open-boundary edge (rims of open surfaces). */
   rim?: (ctx: EdgeCtx, f: Features) => void;
   thickness: number;
@@ -77,7 +79,7 @@ export function buildPanelParts(U: Unfolded, cfg: PanelConfig, warnings: string[
         cfg.seam?.(ctx, F);
       }
     cfg.island?.(id, faces, region, F);
-    if (cfg.vertexRelief) {
+    if (cfg.vertexRelief || cfg.vertexHole) {
       // Corner relief for junction hubs, at every vertex of the island that has one.
       const seen = new Set<number>();
       for (const f of faces)
@@ -85,9 +87,29 @@ export function buildPanelParts(U: Unfolded, cfg: PanelConfig, warnings: string[
           const v = U.m.indices[f * 3 + k];
           if (seen.has(v)) continue;
           seen.add(v);
-          const r = cfg.vertexRelief(v);
+          const r = cfg.vertexRelief?.(v) ?? 0;
           const q = U.pos2.get(`${f}:${v}`);
           if (r > 0 && q) F.sub.push(circlePath(q[0], q[1], r, 32));
+          const hole = cfg.vertexHole?.(v, id);
+          if (hole && q) {
+            // Bisector of the island's corner at v: the sum of the unit edge directions of its faces there.
+            let bx = 0, by = 0;
+            for (const g of faces) {
+              const ids = [0, 1, 2].map((k2) => U.m.indices[g * 3 + k2]);
+              const k2 = ids.indexOf(v);
+              if (k2 < 0) continue;
+              for (const o of [ids[(k2 + 1) % 3], ids[(k2 + 2) % 3]]) {
+                const p2 = U.pos2.get(`${g}:${o}`);
+                const c = U.pos2.get(`${g}:${v}`);
+                if (!p2 || !c) continue;
+                const l = Math.hypot(p2[0] - c[0], p2[1] - c[1]) || 1;
+                bx += (p2[0] - c[0]) / l;
+                by += (p2[1] - c[1]) / l;
+              }
+            }
+            const l = Math.hypot(bx, by);
+            if (l > 1e-6) F.holes.push({ x: q[0] + (bx / l) * hole.dist, y: q[1] + (by / l) * hole.dist, r: hole.r });
+          }
         }
     }
     let cut = region;

@@ -113,7 +113,7 @@ const STEPS: Record<string, string[]> = {
 };
 
 const JOIN_STEPS: Partial<Record<string, string>> = {
-  junction: 'Junction hubs: print the hubs from the connector export. Each hub sits where its parts meet; slide the cut-back corners or bar ends into its forks or sockets until they bottom out.',
+  junction: 'Junction hubs: print the hubs from the kit export. Each hub sits where its parts meet; slide the cut-back corners or bar ends into its forks or sockets until they bottom out. Support-free hubs: rest each panel corner on its shelf and screw or glue it. Flat hubs: bend each arm along its groove or score line by the engraved angle, then screw it to its panel or tie its stick to it.',
   crossing: 'Crossing clips: once two parts are slotted together, press a clip over each end of the crossing. On stacks, push a collar onto the rod on both sides of each layer.',
   cardboard: 'Cardboard connectors: print the connectors (one file per angle). Push the connector onto one panel at its engraved mark, then push the neighbouring panel into the other channel.',
   lego: 'LEGO Technic: join parts with Technic pins (2780) through the matching Ø4.8 mm holes, or run Technic axles with bushes through the cross-shaped holes.',
@@ -319,7 +319,13 @@ export async function buildAssemblyGuide(onProgress?: (f: number) => void): Prom
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(11);
   let y = M + 18;
-  [...(STEPS[p.method] ?? []), ...(JOIN_STEPS[p.joinery.kind] ? [JOIN_STEPS[p.joinery.kind]!] : [])].forEach((s, i) => {
+  const foldSteps =
+    p.method === 'folded' && p.folded.foldLine === 'relief'
+      ? ['Bend relief: bend each fold slowly by hand or over a straight edge, all in one go. The slots open on the outside of the bend; do not bend back and forth.']
+      : (p.method === 'folded' && p.folded.foldLine === 'hinge') || p.method === 'flexhinge'
+        ? ['Living hinges: bend each hinge band gradually around something round, never past its bend radius. Warm acrylic first; a little steam helps plywood.']
+        : [];
+  [...(STEPS[p.method] ?? []), ...foldSteps, ...(JOIN_STEPS[p.joinery.kind] ? [JOIN_STEPS[p.joinery.kind]!] : [])].forEach((s, i) => {
     const lines = doc.splitTextToSize(s, W - 2 * M - 12);
     doc.setFont('helvetica', 'bold');
     doc.text(String(i + 1), M, y);

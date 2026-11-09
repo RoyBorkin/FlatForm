@@ -9,12 +9,17 @@ import type { JoineryParams } from '../params';
 import { cross3, dot3, norm3, tangentFrame, type V3 } from '../math/vec';
 import type { Unfolded } from '../unfold/unfold';
 import { getV, sub3 } from '../math/vec';
+import { flatHub } from './flatHub';
 
 type J = JoineryParams['junction'];
 
 /** Half the widest extent of a socket (mm). */
 export const socketRadius = (a: Pick<JunctionArm, 'shape' | 'w' | 'h'>, j: J) =>
-  a.shape === 'round' ? a.w / 2 + j.clearance : a.shape === 'fork' ? a.h / 2 + j.clearance : Math.hypot(a.w, a.h) / 2 + j.clearance;
+  a.shape === 'round'
+    ? (a.w / 2 + j.clearance) * (j.style === 'printable' ? Math.SQRT2 : 1) // support-free hubs use 45° diamond sockets
+    : a.shape === 'fork'
+      ? a.h / 2 + j.clearance
+      : Math.hypot(a.w, a.h) / 2 + j.clearance;
 
 /**
  * Distance from the hub centre to the bottom of the sockets, far enough out
@@ -76,7 +81,24 @@ export function junctionSignature(h: Junction): string {
  * more separate parts meet. Each part that touches the vertex gets a fork
  * that grips its corner; the corner is cut back by the hub's core radius.
  */
-export function panelJunctions(U: Unfolded, j: J, thickness: number, include: (v: number) => boolean = () => true): { junctions: Junction[]; relief: Map<number, number> } {
+export interface PanelHubs {
+  junctions: Junction[];
+  /** Corner cut-back radius per mesh vertex. */
+  relief: Map<number, number>;
+  /** Flat hubs: screw hole per panel corner, keyed "vertex:island", as distance from the node along the corner. */
+  holes: Map<string, { dist: number; r: number }>;
+}
+
+/** Panel config hooks for corner hubs: cut the corners back and, for flat hubs, drill the screw holes. */
+export function hubPanelConfig(h: PanelHubs | null) {
+  if (!h) return {};
+  return {
+    vertexRelief: (v: number) => h.relief.get(v) ?? 0,
+    vertexHole: h.holes.size ? (v: number, island: number) => h.holes.get(`${v}:${island}`) : undefined,
+  };
+}
+
+export function panelJunctions(U: Unfolded, j: J, thickness: number, include: (v: number) => boolean = () => true): PanelHubs {
   const m = U.m;
   const nt = m.indices.length / 3;
   const byVertex = new Map<number, number[]>();
@@ -88,6 +110,7 @@ export function panelJunctions(U: Unfolded, j: J, thickness: number, include: (v
     }
   const junctions: Junction[] = [];
   const relief = new Map<number, number>();
+  const holes = new Map<string, { dist: number; r: number }>();
   const forkW = Math.max(8, j.socketDepth * 0.8);
   for (const [v, faces] of byVertex) {
     if (!include(v)) continue;
@@ -121,9 +144,23 @@ export function panelJunctions(U: Unfolded, j: J, thickness: number, include: (v
     }
     const h = makeJunction(`J${junctions.length + 1}`, p, nrm, arms, j);
     junctions.push(h);
-    relief.set(v, h.core + j.clearance);
+    // Flat hubs sit on the corners, which only need to clear the plate's centre.
+    relief.set(v, j.style === 'flat' ? flatHub(h, j).rb * 0.9 + j.clearance : h.core + j.clearance);
+    const islands = [...byIsland.keys()];
+    panelHoleDists(h, j).forEach((d, i) => d && holes.set(`${v}:${islands[i]}`, { dist: d, r: j.flatHole / 2 }));
   }
-  return { junctions, relief };
+  return { junctions, relief, holes };
+}
+
+/**
+ * Where a hub screws to each panel corner (distance from the node along the
+ * corner's bisector), per arm; undefined where nothing is screwed.
+ */
+export function panelHoleDists(h: Junction, j: J): (number | undefined)[] {
+  if (j.flatHole <= 0) return h.arms.map(() => undefined);
+  if (j.style === 'flat') return flatHub(h, j).arms.map((a) => a.holeDist);
+  if (j.style === 'printable') return h.arms.map((a) => (a.shape === 'fork' ? h.core + j.socketDepth / 2 : undefined));
+  return h.arms.map(() => undefined);
 }
 
 /** Group by signature: one printable file per distinct hub. */

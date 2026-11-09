@@ -9,6 +9,7 @@ import type { JoineryParams } from '../params';
 import type { Junction, JunctionArm } from '../types';
 import { cross3, dot3, norm3, type V3 } from '../math/vec';
 import { groupJunctions } from '../joinery/junction';
+import { flatHub } from '../joinery/flatHub';
 
 const SEG = 40;
 
@@ -62,13 +63,138 @@ export function junctionHub(W: ManifoldToplevel, h: Junction, j: JoineryParams['
   return onBed(Manifold.union([core, ...sleeves]).subtract(Manifold.union(sockets)));
 }
 
+/**
+ * Support-free junction hub, one piece. Every sleeve stands on its own fin:
+ * the convex hull of the sleeve and its footprint on the bed, pulled in by
+ * at most 45°, so nothing overhangs more than 45°. Round sockets are
+ * diamonds with a vertical diagonal (45° roofs); square and slot sockets are
+ * short bridges. Stick hubs print upside down when most arms point down, so
+ * the sockets rise and their blind ends are floors. Panel hubs hold each
+ * corner on a shelf (no roof over the panel), screwed or glued.
+ */
+export function printableHub(W: ManifoldToplevel, h: Junction, j: JoineryParams['junction']): ManifoldT {
+  const { Manifold } = W;
+  const c = j.clearance, wall = j.wall;
+  const L = h.core + j.socketDepth;
+  const forks = h.arms.some((a) => a.shape === 'fork');
+  // Print with most arms rising (forks: always shelf side up).
+  const flip = !forks && h.arms.reduce((s, a) => s + a.dir[2], 0) < 0;
+  const F = (v: V3): V3 => (flip ? [v[0], -v[1], -v[2]] : v); // 180° about x
+  type Box = { M: number[]; x0: number; x1: number; y0: number; y1: number; z0: number; z1: number };
+  const boxes: Box[] = [];
+  const sockets: ManifoldT[] = [];
+  const holes: ManifoldT[] = [];
+  let maxR = 0;
+  for (const a0 of h.arms) {
+    const a = { ...a0, dir: F(a0.dir), up: F(a0.up) };
+    const d = norm3(a.dir);
+    const depth = j.socketDepth + 1;
+    if (a.shape === 'round') {
+      // Diamond with its diagonal as close to vertical as the arm allows.
+      const k = d[2];
+      let vert = norm3([-d[0] * k, -d[1] * k, 1 - k * k]);
+      if (!Number.isFinite(vert[0])) vert = norm3(a.up);
+      const M = armMatrix({ ...a, up: vert }) as Parameters<ManifoldT['transform']>[0];
+      const sq = a.w + 2 * c, r = (sq / 2) * Math.SQRT2;
+      boxes.push({ M, x0: 0, x1: L, y0: -r - wall, y1: r + wall, z0: -r - wall, z1: r + wall });
+      sockets.push(Manifold.cube([depth, sq, sq], true).rotate([45, 0, 0]).translate([h.core + depth / 2, 0, 0]).transform(M));
+      maxR = Math.max(maxR, r + wall);
+    } else if (a.shape === 'fork') {
+      const M = armMatrix(a) as Parameters<ManifoldT['transform']>[0];
+      const top = -(a.h / 2 + c);
+      boxes.push({ M, x0: 0, x1: L, y0: -a.w / 2, y1: a.w / 2, z0: top - 2 * wall, z1: top });
+      if (j.flatHole > 0) holes.push(Manifold.cylinder(40, j.flatHole / 2, j.flatHole / 2, SEG).translate([h.core + j.socketDepth / 2, 0, -20]).transform(M));
+      maxR = Math.max(maxR, a.w / 2);
+    } else {
+      const M = armMatrix(a) as Parameters<ManifoldT['transform']>[0];
+      const sw = a.w + 2 * c, sh = a.h + 2 * c;
+      boxes.push({ M, x0: 0, x1: L, y0: -sw / 2 - wall, y1: sw / 2 + wall, z0: -sh / 2 - wall, z1: sh / 2 + wall });
+      sockets.push(Manifold.cube([depth, sw, sh], true).translate([h.core + depth / 2, 0, 0]).transform(M));
+      maxR = Math.max(maxR, Math.hypot(sw, sh) / 2 + wall);
+    }
+  }
+  const tf = (b: Box, x: number, y: number, z: number): V3 => {
+    const M = b.M;
+    return [M[0] * x + M[4] * y + M[8] * z, M[1] * x + M[5] * y + M[9] * z, M[2] * x + M[6] * y + M[10] * z];
+  };
+  const corners = boxes.map((b) => {
+    const pts: V3[] = [];
+    for (const x of [b.x0, b.x1]) for (const y of [b.y0, b.y1]) for (const z of [b.z0, b.z1]) pts.push(tf(b, x, y, z));
+    return pts;
+  });
+  const coreR = Math.max(maxR * 0.8, 3);
+  let bed = -coreR;
+  for (const pts of corners) for (const q of pts) bed = Math.min(bed, q[2]);
+  const solids: ManifoldT[] = [];
+  boxes.forEach((b, i) => {
+    const pts = corners[i];
+    // Axis of the sleeve in plan, for pulling the fin in at 45°.
+    const o = tf(b, 0, 0, 0), e = tf(b, 1, 0, 0);
+    let ax: [number, number] = [e[0] - o[0], e[1] - o[1]];
+    const al = Math.hypot(ax[0], ax[1]);
+    ax = al > 1e-6 ? [ax[0] / al, ax[1] / al] : [1, 0];
+    const feet: V3[] = pts.map((q) => {
+      const t = q[0] * ax[0] + q[1] * ax[1];
+      const foot: [number, number] = [ax[0] * t, ax[1] * t];
+      const lat: [number, number] = [q[0] - foot[0], q[1] - foot[1]];
+      const ll = Math.hypot(lat[0], lat[1]);
+      const keep = ll > 1e-6 ? Math.max(0, ll - (q[2] - bed)) / ll : 0;
+      return [foot[0] + lat[0] * keep, foot[1] + lat[1] * keep, bed];
+    });
+    solids.push(Manifold.hull([...pts, ...feet]));
+  });
+  // Core: a column from the bed up to the lowest sleeve top near the centre (forks: under the panels).
+  let coreTop = coreR;
+  if (forks) coreTop = Math.min(...boxes.map((b) => tf(b, 0, 0, b.z1)[2]));
+  solids.push(Manifold.cylinder(coreTop - bed, coreR, coreR, SEG).translate([0, 0, bed]));
+  let body = Manifold.union(solids);
+  if (sockets.length) body = body.subtract(Manifold.union(sockets));
+  if (holes.length) body = body.subtract(Manifold.union(holes));
+  return onBed(body);
+}
+
+/**
+ * Flat, flexible junction hub: a thin star-shaped plate with a V-groove
+ * across each arm at its bend line, on the inside of the bend, leaving a
+ * thin hinge that bends to the arm's angle. Print in PETG or TPU.
+ */
+export function flatHubMesh(W: ManifoldToplevel, h: Junction, j: JoineryParams['junction']): ManifoldT {
+  const { Manifold, CrossSection } = W;
+  const fh = flatHub(h, j);
+  const T = Math.max(0.6, j.flatThickness);
+  const hinge = Math.max(0.2, Math.min(T - 0.2, j.flatHinge));
+  let plate = new CrossSection(fh.outline, 'NonZero').extrude(T);
+  const cuts: ManifoldT[] = [];
+  for (const a of fh.arms) {
+    for (const hole of a.holes) cuts.push(Manifold.cylinder(T + 2, hole.r, hole.r, SEG).translate([hole.x, hole.y, -1]));
+    if (a.slots.length) cuts.push(new CrossSection(a.slots, 'NonZero').extrude(T + 2).translate([0, 0, -1]));
+    const ang = (Math.abs(a.angle) * Math.PI) / 180;
+    if (ang < 0.01) continue;
+    const depth = T - hinge;
+    const g = 2 * depth * Math.tan(Math.min(ang, 2.6) / 2) + 0.3;
+    const [p, q] = a.bend;
+    const len = Math.hypot(q[0] - p[0], q[1] - p[1]) + 2;
+    const tri: [number, number][] = a.angle > 0 ? [[-g / 2, T + 0.05], [0, hinge], [g / 2, T + 0.05]] : [[-g / 2, -0.05], [g / 2, -0.05], [0, depth]];
+    const m = a.m;
+    const M = [m[0], m[1], 0, 0, 0, 0, 1, 0, m[1], -m[0], 0, 0, (p[0] + q[0]) / 2, (p[1] + q[1]) / 2, 0, 1] as Parameters<ManifoldT['transform']>[0];
+    cuts.push(new CrossSection([tri], 'NonZero').extrude(len, 0, 0, 1, true).transform(M));
+  }
+  if (cuts.length) plate = plate.subtract(Manifold.union(cuts));
+  return onBed(plate);
+}
+
+/** The printable solid for one hub in the chosen style. */
+export function hubSolid(W: ManifoldToplevel, h: Junction, j: JoineryParams['junction']): ManifoldT {
+  return j.style === 'printable' ? printableHub(W, h, j) : j.style === 'flat' ? flatHubMesh(W, h, j) : junctionHub(W, h, j);
+}
+
 /** Junction hubs grouped into one file per distinct shape. */
 export function junctionParts(W: ManifoldToplevel, list: Junction[], j: JoineryParams['junction']) {
   return groupJunctions(list, j.dedupe).map((g, i) => ({
     name: `junction-hub_${String(i + 1).padStart(3, '0')}_${g.hub.arms.length}arm${g.count > 1 ? `_x${g.count}` : `_${g.hub.id}`}`,
     count: g.count,
     ids: g.ids,
-    mesh: junctionHub(W, g.hub, j),
+    mesh: hubSolid(W, g.hub, j),
   }));
 }
 
@@ -187,7 +313,8 @@ export function buildKit(W: ManifoldToplevel, req: KitRequest, limit = Infinity)
       for (const g of groupJunctions(list, J.junction.dedupe)) {
         if (out.length >= limit) break;
         const i = out.length + 1;
-        push(`junction-hub_${String(i).padStart(3, '0')}_${g.hub.arms.length}-arm${g.count > 1 ? `_x${g.count}` : `_${g.hub.id}`}`, g.count, junctionHub(W, g.hub, J.junction), g.ids);
+        const style = J.junction.style === 'printable' ? '_nosupport' : J.junction.style === 'flat' ? '_flat' : '';
+        push(`junction-hub${style}_${String(i).padStart(3, '0')}_${g.hub.arms.length}-arm${g.count > 1 ? `_x${g.count}` : `_${g.hub.id}`}`, g.count, hubSolid(W, g.hub, J.junction), g.ids);
       }
       break;
     }

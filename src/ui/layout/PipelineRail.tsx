@@ -42,7 +42,9 @@ export function PipelineRail() {
       summary:
         p.joinery.kind === 'latches'
           ? `Latches · ${p.joinery.latch.kind}`
-          : p.joinery.kind === 'lego'
+          : p.joinery.kind === 'junction'
+            ? `Junction hubs · ${p.joinery.junction.style === 'printable' ? 'no supports' : p.joinery.junction.style === 'flat' ? 'flat' : 'solid'}`
+            : p.joinery.kind === 'lego'
             ? `LEGO Technic · ${p.joinery.lego.element === 'axle' ? 'axles' : 'pins'}`
             : p.joinery.kind === 'none' && (p.method === 'bricks' || p.method === 'sticks')
               ? JOIN_LABEL.none
