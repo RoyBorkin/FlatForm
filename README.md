@@ -6,7 +6,8 @@
 <h1 align="center">FlatForm</h1>
 
 <p align="center">
-  Turn any 3D shape into flat sheet parts you can laser-cut, CNC-route or 3D-print, number and assemble.<br/>
+  <b>The slicer for 2D fabrication.</b><br/>
+  Slice any 3D model into flat parts you can laser-cut, CNC-route or print flat, then build it back in 3D.<br/>
   Runs in the browser, and as a desktop app for Windows and macOS.
 </p>
 
@@ -23,7 +24,9 @@
   <img src="docs/screenshot-3d.jpg" alt="A table base rebuilt from two layers of laser-cut branching strips, shown in 3D" />
 </p>
 
-FlatForm takes a shape — modelled in the app or imported — and rebuilds it from parts cut out of flat sheet material. It produces the cut file, the flat parts, the assembled 3D model, a parts list, an assembly guide and printable connectors. Every step of the process has its own controls.
+A 3D-printer slicer takes a model and turns it into layers and toolpaths that one machine can build. **FlatForm does the same for 2D manufacturing.** It takes a model — made in the app or imported — and slices it into flat parts that a laser cutter, a CNC router, a paper cutter or a 3D printer printing flat can make, then works out how those parts join, numbers them, nests them on your sheets and writes the files your machine reads.
+
+Where a 3D-print slicer has layer height, infill and supports, FlatForm has the **construction method** (how the model is broken into flat parts: slices, waffles, unfolded panels, strips, bars, triangles…), the **joinery** (how the parts hold together) and the **making** settings (laser, CNC or 3D print). Every step has its own controls, and the result is the cut file, the flat parts, the assembled 3D model, a parts list, an assembly guide and any printed connectors.
 
 It started from the "organic shape to fabrication" workflow, usually built as a large Grasshopper definition (SubD → Kangaroo → clusters → Kruskal maze → strips → pinned layers → unroll → nest), and makes it a standalone tool with **eleven construction methods**, **seven kinds of joinery** and three ways of making the parts.
 
@@ -138,7 +141,7 @@ npm run desktop:build   # build an installer for the current OS
 
 Output goes to `src-tauri/target/release/bundle/` (`.msi` and `.exe` on Windows, `.dmg` and `.app` on macOS).
 
-**Automated releases**: run `npm run version:set 1.1.0`, commit, push, then push the tag `v1.1.0` (or run *Desktop release* from the Actions tab). `.github/workflows/release.yml` builds Windows installers (`.msi`, `-setup.exe`) and a universal macOS `.dmg` (Apple silicon + Intel) and attaches them to a draft release for you to publish. Builds are not code-signed: macOS builds are ad-hoc signed so they open via *Open Anyway*, and Windows shows a SmartScreen prompt (*More info → Run anyway*). Signing can be added later with the `APPLE_*` secrets listed in the workflow. Full walkthrough in [docs/PUBLISHING.md](docs/PUBLISHING.md).
+**Automated releases**: raise the version (`npm run version:set 1.1.0`, or edit `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`), commit and push (GitHub Desktop works), then run *Desktop release* from the Actions tab. `.github/workflows/release.yml` builds Windows installers (`.msi`, `-setup.exe`) and a universal macOS `.dmg` (Apple silicon + Intel) and attaches them to a draft release for you to publish. Builds are not code-signed: macOS builds are ad-hoc signed so they open via *Open Anyway*, and Windows shows a SmartScreen prompt (*More info → Run anyway*). Signing can be added later with the `APPLE_*` secrets listed in the workflow. Full walkthrough in [docs/PUBLISHING.md](docs/PUBLISHING.md).
 
 ## How the lattice works
 

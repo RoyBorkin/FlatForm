@@ -9,7 +9,7 @@ This guide takes FlatForm from the zip file to three public things:
 | The web app | `https://royborkin.github.io/FlatForm/` |
 | Windows and macOS installers | `https://github.com/royborkin/FlatForm/releases` |
 
-You do the uploading once. After that, GitHub's own computers (GitHub Actions) build the web app and the installers for you, using the workflow files in `.github/workflows/`. You never need a Mac to build the Mac app, or a PC to build the Windows one.
+Everything below uses **GitHub Desktop** and the GitHub website; no command line is needed. You do the uploading once. After that, GitHub's own computers (GitHub Actions) build the web app and the installers for you, using the workflow files in `.github/workflows/`. You never need a Mac to build the Mac app, or a PC to build the Windows one.
 
 > **Why it was stuck on the loading screen.** GitHub Pages was set to *Deploy from a branch*. That publishes the repository files exactly as they are, including `index.html`, which points at the source code (`/src/main.tsx`) instead of the built app. Browsers cannot run that file, so the app never started. Step 3 below switches Pages to *GitHub Actions*, which builds FlatForm first and publishes the result. The new loading screen now says this in plain words if it ever happens again.
 
@@ -17,48 +17,23 @@ You do the uploading once. After that, GitHub's own computers (GitHub Actions) b
 
 ## 1. Prepare the folder on your computer
 
-1. Unzip `flatform.zip`. You get a folder called `flatform`. You can rename it `FlatForm` if you like; the name of the folder does not matter.
-2. Install **Git** if you do not have it:
-   - Windows: <https://git-scm.com/download/win> (keep the default options; it includes the *Git Credential Manager*, which handles signing in).
-   - macOS: open *Terminal* and type `git --version`. If Git is missing, macOS offers to install the Command Line Tools; accept.
-3. Optional but easiest for signing in: install **GitHub CLI** from <https://cli.github.com>, then run `gh auth login` and pick *GitHub.com → HTTPS → Login with a web browser*.
-
-The folder already contains a Git history (the `.git` folder is hidden). You do not need to run `git init`.
-
-> If you prefer not to use a terminal at all, **GitHub Desktop** (<https://desktop.github.com>) works too: *File → Add local repository*, choose the folder, then *Publish repository* (untick *Keep this code private*). Then continue at step 3.
+1. Unzip `flatform.zip`. You get a folder called `flatform` (rename it `FlatForm` if you like; the folder name does not matter). It already contains the Git history (a hidden `.git` folder), so there is nothing to initialise.
+2. Install **GitHub Desktop** from <https://desktop.github.com> and sign in with your GitHub account (*File → Options → Accounts* on Windows, *GitHub Desktop → Settings → Accounts* on macOS).
 
 ## 2. Create the repository and push the code
 
-### 2a. If the `FlatForm` repository does not exist yet
+### 2a. First time: publish the folder as `FlatForm`
 
-1. Go to <https://github.com/new>.
-2. **Owner**: `royborkin`. **Repository name**: `FlatForm`. Capital letters matter, because the web address will be `/FlatForm/`.
-3. Choose **Public** (free GitHub Pages needs a public repository; the *All Rights Reserved* licence still protects the code).
-4. Leave *Add a README*, *.gitignore* and *licence* **unticked**. The project already has them, and adding them here makes the first push fail.
-5. Click **Create repository**.
+1. In GitHub Desktop: **File → Add local repository…**, choose the unzipped folder, **Add repository**.
+2. Click **Publish repository** in the top bar.
+3. **Name**: `FlatForm` (capital letters matter: the web address will be `/FlatForm/`). **Untick** *Keep this code private* (free GitHub Pages needs a public repository; the *All Rights Reserved* licence still protects the code).
+4. Click **Publish repository**. GitHub Desktop creates `github.com/royborkin/FlatForm` and uploads everything.
 
-### 2b. If you already created `FlatForm` and uploaded files to it
+### 2b. If `FlatForm` already exists on GitHub
 
-The files you uploaded before have a different history from the one in the zip. Pick one:
+The simplest route is to start clean: on github.com open the repository's **Settings**, scroll to the bottom, **Delete this repository**, then do 2a. (GitHub Desktop cannot overwrite a repository that has a different history.)
 
-- **Start clean (simplest):** in the repository open *Settings*, scroll to the bottom, *Delete this repository*, then do 2a.
-- **Keep the repository and replace its contents:** push with `--force` in the next step (shown below). This replaces everything in the repository with the zip's version.
-
-### 2c. Push
-
-Open a terminal **in the project folder** (Windows: right-click inside the folder → *Open in Terminal* or *Git Bash Here*; macOS: in Terminal type `cd ` and drag the folder onto the window, then press Enter), and run:
-
-```bash
-git branch -M main
-git remote add origin https://github.com/royborkin/FlatForm.git
-git push -u origin main
-```
-
-- If Git says `remote origin already exists`, run `git remote set-url origin https://github.com/royborkin/FlatForm.git` instead of the `add` line.
-- If the push is rejected because the repository already has other files (case 2b, second option), run `git push -u origin main --force`.
-- If you are asked to sign in, a browser window opens (Git Credential Manager or GitHub CLI). Approve it. GitHub no longer accepts your account password in the terminal; if you are asked for a password there, create a token at *GitHub → Settings → Developer settings → Personal access tokens → Fine-grained*, give it *Contents: Read and write* on `FlatForm`, and paste the token as the password.
-
-Refresh the repository page on GitHub. You should see the README with the FlatForm icon.
+If the repository already holds *this* project (you published it from this folder before), you do not need to do anything here: just commit and push as in step 5.
 
 ## 3. Turn on the web app (GitHub Pages)
 
@@ -71,7 +46,7 @@ Refresh the repository page on GitHub. You should see the README with the FlatFo
 
 Your portfolio at `royborkin.github.io` is not affected: project sites live in their own folder (`/FlatForm/`).
 
-Every later `git push` to `main` updates the web app automatically. The **CI** workflow also runs on every push and checks that the code type-checks, the tests pass and the app builds.
+Every later push to `main` (GitHub Desktop: **Push origin**) updates the web app automatically. The **CI** workflow also runs on every push and checks that the code type-checks, the tests pass and the app builds.
 
 ## 4. Build the Windows and macOS apps (Releases)
 
@@ -79,29 +54,20 @@ The *Desktop release* workflow builds, on GitHub's machines:
 
 | File | For |
 |---|---|
-| `FlatForm_1.0.0_x64_en-US.msi` | Windows installer (Windows 10/11) |
-| `FlatForm_1.0.0_x64-setup.exe` | Windows installer, alternative format |
-| `FlatForm_1.0.0_universal.dmg` | macOS 11 or later, Apple silicon and Intel |
+| `FlatForm_1.0.1_x64_en-US.msi` | Windows installer (Windows 10/11) |
+| `FlatForm_1.0.1_x64-setup.exe` | Windows installer, alternative format |
+| `FlatForm_1.0.1_universal.dmg` | macOS 11 or later, Apple silicon and Intel |
 | `FlatForm_universal.app.tar.gz` | The bare macOS app (for updaters; most people want the `.dmg`) |
 
 ### Make the first release
 
-Either:
+1. On github.com open the **Actions** tab → **Desktop release** (left) → **Run workflow** → **Run workflow**.
+   The release is named after the version in `src-tauri/tauri.conf.json` (now `1.0.1`), and the workflow creates the tag `v1.0.1` for you. No tags are needed in GitHub Desktop.
+2. Two jobs run side by side: *windows-latest* and *macos-latest*. The first run takes about 15–25 minutes; later runs are faster thanks to caching.
+3. When both are green, open **Releases** (right-hand side of the repository's main page). You will find a **draft** called *FlatForm v1.0.1* with the files attached and install notes already written.
+4. Click the pencil icon, check the text, and press **Publish release**. Drafts are invisible to the public until you do this.
 
-- **From the website:** *Actions* tab → **Desktop release** → **Run workflow** → **Run workflow**. The release is named after the version in `src-tauri/tauri.conf.json` (now `1.0.0`, so the tag is `v1.0.0`).
-
-or, from the terminal in the project folder:
-
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-Then:
-
-1. Watch *Actions → Desktop release*. Two jobs run side by side: *windows-latest* and *macos-latest*. The first run takes about 15–25 minutes (the Rust toolchain compiles everything once; later runs are faster thanks to caching).
-2. When both are green, open the **Releases** page (right-hand side of the repository's main page). You will find a **draft** release called *FlatForm v1.0.0* with the files attached and install notes already written.
-3. Click the pencil icon, check the text, and press **Publish release**. Drafts are invisible to the public until you do this.
+**If a release run failed and you want to try again with the same version:** on github.com delete the draft under **Releases** (if one was made), then open **Tags**, click `v1.0.1` → **Delete**. Then run the workflow again. Otherwise the new run reuses the old tag, which points at the old code.
 
 The README's *Download for Windows / macOS* link points to `releases/latest`, so it always opens the newest published release.
 
@@ -125,21 +91,18 @@ These notes are included in every release's description.
 
 ## 5. Publishing an update
 
-1. Make your changes and check them locally (`npm run dev`).
-2. Set the new version everywhere at once:
-   ```bash
-   npm run version:set 1.1.0
-   ```
-3. Commit and push:
-   ```bash
-   git add -A
-   git commit -m "FlatForm 1.1.0"
-   git push
-   ```
-   The web app updates by itself within a few minutes.
-4. Make the installers: `git tag v1.1.0 && git push origin v1.1.0` (or *Actions → Desktop release → Run workflow*), then publish the draft release as in step 4.
+1. Change the files (or replace them with a new version from Claude), and check the app locally if you like (`npm run dev`).
+2. Raise the version in three places, all to the same number, e.g. `1.0.1` → `1.1.0`:
+   - `package.json` → `"version"`
+   - `src-tauri/tauri.conf.json` → `"version"`
+   - `src-tauri/Cargo.toml` → `version = "…"`
 
-Versions must go up (1.0.0 → 1.0.1 → 1.1.0 …). The Windows installer refuses to install an older or identical version over a newer one.
+   Or let a script do it: in GitHub Desktop choose **Repository → Open in Command Prompt** (Windows) / **Open in Terminal** (macOS) and run `npm run version:set 1.1.0` (needs Node.js from <https://nodejs.org> and `npm install` once).
+3. In GitHub Desktop, the **Changes** tab lists every changed file. Type a summary bottom-left (e.g. *FlatForm 1.1.0*), click **Commit to main**, then **Push origin** in the top bar.
+   The web app updates by itself within a few minutes (*Actions → Deploy web app to GitHub Pages*).
+4. For new installers: *Actions → Desktop release → Run workflow*, then publish the draft release as in step 4.
+
+Versions must go up (1.0.0 → 1.0.1 → 1.1.0 …). The Windows installer refuses to install an older or identical version over a newer one, and a release run for a version that already has a tag reuses that old tag.
 
 ## 6. If something goes wrong
 
@@ -151,8 +114,8 @@ Versions must go up (1.0.0 → 1.0.1 → 1.1.0 …). The Windows installer refus
 | A workflow fails at `npm ci` | `package-lock.json` must be committed. It is in the zip; make sure it was pushed. |
 | The deploy step fails with *"environment protection rules"* | *Settings → Environments → github-pages* → allow the `main` branch (or remove the rule). |
 | *Desktop release* fails with *"Resource not accessible by integration"* | *Settings → Actions → General → Workflow permissions* → **Read and write permissions** → Save, then re-run. |
-| A release with the same tag already exists | Delete the old draft release (and its tag under *Tags*), or raise the version with `npm run version:set`. |
-| The push asks for a password and rejects it | Use GitHub CLI (`gh auth login`) or a personal access token, as in step 2c. |
+| A release with the same tag already exists | Delete the old draft release and its tag on github.com (*Releases*, *Tags*), or raise the version (step 5). |
+| GitHub Desktop says the push was rejected | Someone (or the website) changed the repository directly. Click **Fetch origin**, then **Pull origin**, then push again. |
 
 ## What lives where
 
@@ -162,5 +125,5 @@ Versions must go up (1.0.0 → 1.0.1 → 1.1.0 …). The Windows installer refus
 | `.github/workflows/ci.yml` | Type-check, tests and build on every push and pull request |
 | `.github/workflows/release.yml` | Builds the Windows and macOS installers into a draft release |
 | `src-tauri/tauri.conf.json` | Desktop app name, version, icons, installer settings |
-| `scripts/set-version.mjs` | `npm run version:set x.y.z` |
+| `scripts/set-version.mjs` | `npm run version:set x.y.z` (optional; you can edit the three files by hand) |
 | `scripts/notices.mjs` | Writes `public/THIRD-PARTY-NOTICES.txt` (runs on every build) |

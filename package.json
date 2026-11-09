@@ -1,8 +1,8 @@
 {
   "name": "flatform",
   "private": true,
-  "version": "1.0.0",
-  "description": "Turn any 3D shape into flat sheet parts you can laser-cut, CNC-route or 3D-print, number and assemble.",
+  "version": "1.0.1",
+  "description": "A slicer for 2D fabrication: it slices any 3D model into flat parts for laser cutters, CNC routers and flat 3D printing, with the joints, numbers and cut files to build it back in 3D.",
   "author": {
     "name": "Roy Borkin",
     "email": "royborkin@gmail.com",

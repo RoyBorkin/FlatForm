@@ -1,7 +1,7 @@
 # FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved
 name: Desktop release
 
-# Push a tag like v1.0.0 to build Windows and macOS installers
+# Run from the Actions tab (or push a tag like v1.0.1) to build Windows and macOS installers
 # and attach them to a draft GitHub release.
 on:
   push:
@@ -50,6 +50,8 @@ jobs:
             **Windows**: download the `.msi` (or the `-setup.exe`) and run it. The installers are not code-signed, so Windows SmartScreen may say "Windows protected your PC": click **More info → Run anyway**.
 
             **macOS** (Apple silicon and Intel, macOS 11+): download the `.dmg`, open it and drag FlatForm to Applications. The app is not notarised, so the first time, right-click (Control-click) FlatForm in Applications and choose **Open**, then **Open** again. On macOS 15 and later use **System Settings → Privacy & Security → Open Anyway**.
+
+            FlatForm is the slicer for 2D fabrication: it slices 3D models into flat parts for laser cutting, CNC routing and flat 3D printing.
 
             Web version: https://royborkin.github.io/FlatForm/
 

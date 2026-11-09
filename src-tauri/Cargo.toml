@@ -1,8 +1,8 @@
 # FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved
 [package]
 name = "flatform"
-version = "1.0.0"
-description = "Turn 3D shapes into flat sheet parts"
+version = "1.0.1"
+description = "FlatForm: the slicer for 2D fabrication"
 authors = ["Roy Borkin <royborkin@gmail.com>"]
 homepage = "https://royborkin.github.io/"
 license = "LicenseRef-Proprietary"

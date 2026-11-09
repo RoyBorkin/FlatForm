@@ -6,7 +6,7 @@ import { WORLDS, worldById, type WorldId } from '@/themes/themes';
 import { GROUP_LETTERS } from '@/core/parts';
 import { Button, ColorInput, Section, Segmented, SegmentedField, SwitchField } from '../components/controls';
 import { isDesktop } from '@/platform/save';
-import { APP_NAME, AUTHOR_EMAIL, AUTHOR_URL, COPYRIGHT } from '@/brand';
+import { APP_NAME, AUTHOR_EMAIL, AUTHOR_URL, COPYRIGHT, TAGLINE } from '@/brand';
 
 export function SettingsPanel() {
   const settings = useUI((s) => s.settings);
@@ -114,6 +114,7 @@ export function SettingsPanel() {
           <p className="about__name">
             {APP_NAME} <span className="muted">{__APP_VERSION__} · {isDesktop() ? 'desktop' : 'web'}</span>
           </p>
+          <p className="small">{TAGLINE}: slice a 3D model into flat parts for laser cutting, CNC routing or flat 3D printing, then build it back.</p>
           <p className="small">
             {COPYRIGHT} ·{' '}
             <a href={`mailto:${AUTHOR_EMAIL}`}>{AUTHOR_EMAIL}</a> ·{' '}

@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "FlatForm",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "identifier": "app.flatform.desktop",
   "build": {
     "frontendDist": "../dist",
@@ -36,8 +36,8 @@
       "app"
     ],
     "category": "DeveloperTool",
-    "shortDescription": "Turn 3D shapes into flat sheet parts",
-    "longDescription": "FlatForm turns any 3D shape into flat parts you can laser-cut, CNC-route or 3D-print from sheet material, with joinery, numbering, nesting and DXF/SVG/PDF/STL/3MF export.",
+    "shortDescription": "The slicer for 2D fabrication",
+    "longDescription": "FlatForm is a slicer for 2D fabrication. Like a 3D-printer slicer, it takes a 3D model and prepares it for a machine, but it slices the model into flat parts for laser cutters, CNC routers and flat 3D printing, with joinery, numbering, nesting and DXF/SVG/PDF/STL/3MF export.",
     "copyright": "© 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved",
     "publisher": "Roy Borkin",
     "icon": [

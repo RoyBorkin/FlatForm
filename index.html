@@ -4,12 +4,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="FlatForm turns any 3D shape into flat sheet parts you can laser-cut, CNC-route or 3D-print, number and assemble." />
+    <meta name="description" content="FlatForm is the slicer for 2D fabrication: it slices any 3D model into flat parts for laser cutting, CNC routing and flat 3D printing, with joints, numbering, nesting and cut files." />
     <meta name="author" content="Roy Borkin, royborkin@gmail.com, https://royborkin.github.io/" />
     <meta name="copyright" content="© 2026 Roy Borkin" />
     <meta name="theme-color" content="#1c1a17" />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
-    <title>FlatForm</title>
+    <title>FlatForm · the slicer for 2D fabrication</title>
     <style>
       /* Boot splash: shown until the first parts are built (see useBootSplash). */
       #boot {
@@ -36,6 +36,11 @@
         font-size: 22px;
         font-weight: 650;
         letter-spacing: -0.01em;
+      }
+      #boot .boot__tag {
+        margin-top: -10px;
+        font-size: 13px;
+        opacity: 0.66;
       }
       #boot .boot__bar {
         width: 180px;
@@ -119,7 +124,12 @@
           background: #f5f4f1;
           color: #1f1d1a;
         }
-        #boot .boot__bar {
+        #boot .boot__tag {
+        margin-top: -10px;
+        font-size: 13px;
+        opacity: 0.66;
+      }
+      #boot .boot__bar {
           background: rgba(0, 0, 0, 0.1);
         }
       }
@@ -150,6 +160,7 @@
           </g>
         </svg>
         <div class="boot__name">FlatForm</div>
+        <div class="boot__tag">The slicer for 2D fabrication</div>
         <div class="boot__bar"><span></span></div>
         <div class="boot__stage" id="boot-stage">Loading</div>
         <div class="boot__error">
