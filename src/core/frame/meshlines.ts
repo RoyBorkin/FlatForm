@@ -4,7 +4,8 @@
  * stand on edge (radial, like the matchstick lattice) or lie flat in the
  * surface, meet at nodes, and are joined with holes, lacing or printed hubs.
  */
-import type { MeshData, MethodResult, Part2D, Path2, Polyline2 } from '../types';
+import type { Junction, JunctionArm, MeshData, MethodResult, Part2D, Path2, Polyline2 } from '../types';
+import { makeJunction } from '../joinery/junction';
 import type { JoineryParams, MaterialParams, MeshLinesParams } from '../params';
 import { remesh, edgeLengthForTriangles } from '../mesh/remesh';
 import { buildTopology, triNormal } from '../mesh/mesh';
@@ -46,6 +47,33 @@ export function buildMeshLines(surface: MeshData, P: MeshLinesParams, joinery: J
   const byLength = new Map<number, string>();
   let shortest = Infinity;
   const nodeArms: V3[][] = Array.from({ length: m.positions.length / 3 }, () => []);
+  // Junction hubs: every bar ends at the bottom of its socket, so each end is cut back by that node's core.
+  const useHubs = joinery.kind === 'junction';
+  const nv = m.positions.length / 3;
+  const endCut = new Float64Array(nv).fill(P.nodeClearance);
+  const junctions: Junction[] = [];
+  if (useHubs) {
+    const arms: JunctionArm[][] = Array.from({ length: nv }, () => []);
+    for (let e = 0; e < nE; e++) {
+      const a = topo.edgeA[e], b = topo.edgeB[e];
+      const x = norm3(sub3(getV(m.positions, b), getV(m.positions, a)));
+      const nA = getV(vn, a), nB = getV(vn, b);
+      const arm = (dir: V3, nn: V3): JunctionArm => {
+        const k = dot3(nn, dir);
+        const up = norm3([nn[0] - dir[0] * k, nn[1] - dir[1] * k, nn[2] - dir[2] * k]);
+        // Radial bars: the bar's width runs along the normal; flat bars lie in the surface.
+        return radial ? { dir, up, shape: 'slot', w: t, h: w } : { dir, up, shape: 'slot', w, h: t };
+      };
+      arms[a].push(arm(x, nA));
+      arms[b].push(arm([-x[0], -x[1], -x[2]], nB));
+    }
+    for (let v = 0; v < nv; v++) {
+      if (!arms[v].length) continue;
+      const h = makeJunction(`N${v + 1}`, getV(m.positions, v), getV(vn, v), arms[v], joinery.junction);
+      endCut[v] = h.core;
+      junctions.push(h);
+    }
+  }
   for (let e = 0; e < nE; e++) {
     const a = topo.edgeA[e], b = topo.edgeB[e];
     const pa = getV(m.positions, a), pb = getV(m.positions, b);
@@ -64,7 +92,7 @@ export function buildMeshLines(surface: MeshData, P: MeshLinesParams, joinery: J
     // Radial: width along the normal, thickness across; flat: the other way round.
     const yAx = radial ? n : side;
     const zAx = cross3(x, yAx);
-    const len = L - 2 * P.nodeClearance;
+    const len = L - endCut[a] - endCut[b];
     if (len < w * 0.8) continue;
     shortest = Math.min(shortest, L);
     nodeArms[a].push(x);
@@ -75,12 +103,12 @@ export function buildMeshLines(surface: MeshData, P: MeshLinesParams, joinery: J
     const barLen = lenKey;
     // Part frame: x along the bar, y across its width, z through the sheet (0..t).
     // Radial bars hang just inside the surface; flat bars lie just under it.
-    const along = P.nodeClearance + (len - barLen) / 2;
+    const along = endCut[a] + (len - barLen) / 2;
     const yC = radial ? -w / 2 : 0;
     const zC = radial ? -t / 2 : -t;
     const o2: V3 = [0, 1, 2].map((i) => pa[i] + x[i] * along + yAx[i] * yC + zAx[i] * zC) as V3;
     const holes = [];
-    if (holeD > 0) {
+    if (holeD > 0 && !useHubs) {
       const inset = Math.max(w / 2, holeD * 1.2);
       if (barLen > inset * 2 + holeD) holes.push({ x: inset, y: 0, r: holeD / 2, label: `N${a + 1}` }, { x: barLen - inset, y: 0, r: holeD / 2, label: `N${b + 1}` });
     }
@@ -121,10 +149,10 @@ export function buildMeshLines(surface: MeshData, P: MeshLinesParams, joinery: J
   });
   return {
     parts,
-    assembly: { kind: 'planar', thickness: t },
+    assembly: { kind: 'planar', thickness: t, hubs: useHubs ? new Float32Array(junctions.flatMap((h) => [...h.pos, h.core + joinery.junction.wall])) : undefined },
     overlays: {},
     stats: { bars: parts.length, nodes: hubs.length, lengths: byLength.size, shortest: Number.isFinite(shortest) ? Math.round(shortest) : 0 },
     warnings,
-    connectorData: { pinCount: hubs.length, gripLength: t, hubs, hubChannel: radial ? { width: t, height: w } : { width: w, height: t } },
+    connectorData: { pinCount: useHubs ? junctions.length : hubs.length, gripLength: t, hubs, hubChannel: radial ? { width: t, height: w } : { width: w, height: t }, junctions: useHubs ? junctions : undefined },
   };
 }

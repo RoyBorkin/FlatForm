@@ -14,7 +14,9 @@ import { flattenCharts } from './flatten';
 import { buildPanelParts, oversizeWarning } from './panels';
 import { edgeContext } from './unfold';
 import { foldLine, glueFlap, latches, wireStitches, type EdgeCtx, type Features } from '../joinery/edgeFeatures';
-import { seamFeature, seamLabelInset } from '../joinery/seams';
+import { AngleCounter, seamFeature, seamLabelInset } from '../joinery/seams';
+import { panelJunctions } from '../joinery/junction';
+import { seamBendTabs } from '../joinery/bendTabs';
 import { buildSurfaceGraph } from '../graph/graph';
 import { buildTopology } from '../mesh/mesh';
 import { clusterGraph } from '../graph/cluster';
@@ -43,6 +45,7 @@ export function buildPapercraft(input: Common & { params: PapercraftParams }): M
   const { W, H } = usable(sheet);
   const U = unfold(m, { strategy: P.strategy, maxIslandFaces: P.maxPieceFaces, autoSplit: P.autoSplit, sheetW: W, sheetH: H, pad: P.flapWidth });
   const flat = (P.flatThreshold * Math.PI) / 180;
+  const pcHubs = J.kind === 'junction' ? panelJunctions(U, J.junction, t) : null;
   const flapOn = (ctx: EdgeCtx) => {
     switch (P.flaps) {
       case 'none':
@@ -67,21 +70,31 @@ export function buildPapercraft(input: Common & { params: PapercraftParams }): M
       fold: (ctx, F) => {
         if (P.foldStyle === 'lines' && ctx.foldAngle > flat) foldLine(ctx, F, 'score');
       },
+      vertexRelief: pcHubs ? (v) => pcHubs.relief.get(v) ?? 0 : undefined,
       seam: (ctx, F) => {
         if (J.kind === 'latches') latches(ctx, F, J.latch);
         else if (J.kind === 'wire') wireStitches(ctx, F, J.wire);
+        else if (J.kind === 'bendtabs') seamBendTabs(ctx, F, J.bendtabs);
+        else if (J.kind === 'junction') return;
         else if (flapOn(ctx)) glueFlap(ctx, F, P.flaps === 'both' ? P.flapWidth * 0.6 : P.flapWidth, P.flapShape, P.flapAngle);
       },
     },
     warnings,
   );
   oversizeWarning(parts, W, H, warnings);
-  return { parts, assembly, overlays: {}, stats: { faces: m.indices.length / 3, pieces: U.islands.length, seams: U.seams }, warnings };
+  return {
+    parts,
+    assembly: { ...assembly, hubs: pcHubs?.junctions.length ? new Float32Array(pcHubs.junctions.flatMap((h) => [...h.pos, h.core + J.junction.wall])) : undefined },
+    overlays: {},
+    stats: { faces: m.indices.length / 3, pieces: U.islands.length, seams: U.seams },
+    warnings,
+    connectorData: pcHubs?.junctions.length ? { pinCount: pcHubs.junctions.length, gripLength: t, junctions: pcHubs.junctions } : undefined,
+  };
 }
 
 // ------------------------------------------------------------------ charts
 
-function charts(m: MeshData, pieces: number, seed: number): Int32Array {
+export function charts(m: MeshData, pieces: number, seed: number): Int32Array {
   const g = buildSurfaceGraph(m, 'hex'); // node i = face i
   const chart = clusterGraph(g, Math.max(1, pieces), seed, 8);
   return splitToDiscs(m, chart);
@@ -254,6 +267,8 @@ export function buildFlexHinge(input: Common & { params: FlexHingeParams }): Met
   input.onProgress?.(0.6, 'Hinges');
   const minA = (P.minAngle * Math.PI) / 180;
   let hingeArea = 0;
+  const clips = new AngleCounter(5); // a cardboard channel takes a few degrees either way
+  const fhHubs = J.kind === 'junction' ? panelJunctions(U, J.junction, t) : null;
   const { parts, assembly } = buildPanelParts(
     U,
     {
@@ -264,7 +279,8 @@ export function buildFlexHinge(input: Common & { params: FlexHingeParams }): Met
       seamMarks: P.seamMarks,
       pieceLabels: true,
       labelInset: seamLabelInset(J, t),
-      seam: seamFeature(J, { glueTabWidth: 0 }),
+      seam: seamFeature(J, { glueTabWidth: 0, onClip: (_c, n, a) => clips.add(a, n) }),
+      vertexRelief: fhHubs ? (v) => fhHubs.relief.get(v) ?? 0 : undefined,
       island: (_i, faces, region, F: Features) => {
         // Bands around every fold that needs bending, slit along the main bending direction.
         const faceSet = new Set(faces);
@@ -296,10 +312,16 @@ export function buildFlexHinge(input: Common & { params: FlexHingeParams }): Met
   oversizeWarning(parts, W, H, warnings);
   return {
     parts,
-    assembly,
+    assembly: { ...assembly, hubs: fhHubs?.junctions.length ? new Float32Array(fhHubs.junctions.flatMap((h) => [...h.pos, h.core + J.junction.wall])) : undefined },
     overlays: {},
     stats: { faces: m.indices.length / 3, pieces: U.islands.length, seams: U.seams, hingeArea: Math.round(hingeArea) },
     warnings,
+    connectorData: {
+      pinCount: fhHubs?.junctions.length ?? 0,
+      gripLength: t,
+      junctions: fhHubs?.junctions.length ? fhHubs.junctions : undefined,
+      seamClips: clips.total ? clips.list() : undefined,
+    },
   };
 }
 

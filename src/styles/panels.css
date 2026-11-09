@@ -788,3 +788,107 @@
   color: var(--accent);
   text-underline-offset: 2px;
 }
+
+/* kits: brick sizes, LEGO palette, cut lists */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+.chip-set,
+.swatch-set {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: var(--sp-2) 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.chip-set legend,
+.swatch-set legend {
+  width: 100%;
+  margin-bottom: 6px;
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  padding: 0;
+}
+.chip-set .chip {
+  cursor: pointer;
+  height: 26px;
+  padding: 0 9px;
+  font-family: var(--font-num);
+  font-size: var(--fs-xs);
+}
+.chip-set .chip input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+.chip-set .chip:has(input:checked) {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--text);
+}
+.chip-set .chip:has(input:disabled) {
+  cursor: default;
+  opacity: 0.75;
+}
+.chip-set .chip:has(input:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.swatch-set .swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--line-strong);
+  cursor: pointer;
+  opacity: 0.4;
+  transition: opacity var(--dur-fast) ease, transform 140ms var(--ease-out), box-shadow var(--dur-fast) ease;
+}
+.swatch-set .swatch[aria-pressed='true'] {
+  opacity: 1;
+  box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--accent);
+}
+.swatch-set .swatch:active {
+  transform: scale(0.94);
+}
+.kit-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+  margin-top: var(--sp-2);
+}
+.kit-table th,
+.kit-table td {
+  text-align: left;
+  padding: 5px 6px;
+  border-bottom: 1px solid var(--line);
+  font-variant-numeric: tabular-nums;
+}
+.kit-table th {
+  font-weight: 600;
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+}
+.kit-table td:last-child,
+.kit-table th:last-child {
+  text-align: right;
+}
+.dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  vertical-align: -1px;
+  margin-right: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+}

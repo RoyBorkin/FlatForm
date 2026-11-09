@@ -26,6 +26,7 @@ import { projectFileBlob } from '@/io/projectFile';
 import { toast } from '@/ui/components/toast';
 import type { NestResult } from '@/core/types';
 import { create } from 'zustand';
+import { bomCsv, brickInstructions, cutListCsv, kitRequest, ldraw, printedKit } from './kitExports';
 
 /** Progress of long exports (the assembly guide), shown on its button. */
 const TASK_LABEL: Record<string, string> = {
@@ -34,6 +35,9 @@ const TASK_LABEL: Record<string, string> = {
   Bundle: 'Packing everything',
   Project: 'Saving the project',
   'Print plates': 'Building print plates',
+  Kit: 'Building printable parts',
+  Bricks: 'Building printable bricks',
+  Instructions: 'Writing the building instructions',
 };
 
 export const useExportProgress = create<{ guide: number | null }>(() => ({ guide: null }));
@@ -256,6 +260,68 @@ export const exporters = {
       await saveFile(`${base}-connectors.zip`, zip(files));
       toast(`${parts.length} connector file${parts.length > 1 ? 's' : ''} exported`);
     }),
+  /** Printed junction hubs, crossing clips or cardboard connectors, one STL per distinct shape. */
+  kit: () =>
+    run('Kit', async () => {
+      const { p, method, base } = ctx();
+      const kind = printedKit(p, method);
+      if (!kind) throw new Error('This joinery has no printed parts.');
+      const parts = await geometry().kit(kitRequest(p, method, kind));
+      if (!parts.length) throw new Error('No printed parts were needed.');
+      const files: Record<string, Uint8Array> = {};
+      const counts: string[] = ['file,count,for'];
+      for (const c of parts) {
+        files[`${c.name}.stl`] = await blobBytes(await exportModel(meshGroup(c.mesh, c.name), 'stl'));
+        counts.push(`${c.name}.stl,${c.count},"${(c.ids ?? []).slice(0, 40).join(' ')}"`);
+      }
+      const total = parts.reduce((a, c) => a + c.count, 0);
+      counts.push('', `total,${total}`, `"${COPYRIGHT_LINE}"`);
+      files['print-list.csv'] = strToU8(counts.join('\n'));
+      await saveFile(`${base}-${kind}-kit.zip`, zip(files));
+      toast(`${parts.length} file${parts.length > 1 ? 's' : ''} for ${total} printed part${total > 1 ? 's' : ''} exported`);
+    }),
+  cutList: () =>
+    run('Cut list', async () => {
+      const { method, base } = ctx();
+      if (!method.kit?.sticks?.length) throw new Error('No sticks in this build.');
+      await saveFile(`${base}-stick-cut-list.csv`, cutListCsv(method));
+      toast('Cut list exported');
+    }),
+  ldraw: () =>
+    run('LDraw', async () => {
+      const { p, method, base } = ctx();
+      if (!method.kit?.bricks?.length) throw new Error('No bricks in this build.');
+      await saveFile(`${base}.ldr`, ldraw(method, p.name));
+      toast('LDraw model exported. Open it in Studio, LeoCAD or LDView.');
+    }),
+  brickList: () =>
+    run('Brick list', async () => {
+      const { method, base } = ctx();
+      await saveFile(`${base}-brick-list.csv`, bomCsv(method));
+      toast('Brick list exported');
+    }),
+  brickGuide: () =>
+    run('Instructions', async () => {
+      const { p, method, base } = ctx();
+      if (!method.kit?.bricks?.length) throw new Error('No bricks in this build.');
+      await saveFile(`${base}-building-instructions.pdf`, brickInstructions(method, p.name));
+      toast('Building instructions exported');
+    }),
+  printBricks: () =>
+    run('Bricks', async () => {
+      const { p, method, base } = ctx();
+      const parts = await geometry().kit(kitRequest(p, method, 'bricks'));
+      const files: Record<string, Uint8Array> = {};
+      const counts = ['file,count'];
+      for (const c of parts) {
+        files[`${c.name}.stl`] = await blobBytes(await exportModel(meshGroup(c.mesh, c.name), 'stl'));
+        counts.push(`${c.name}.stl,${c.count}`);
+      }
+      counts.push('', `"${COPYRIGHT_LINE}"`, '"LEGO-compatible: 8 mm stud grid, 0.1 mm play per side. Print a 2x2 first and tune your printer before printing the rest."');
+      files['print-list.csv'] = strToU8(counts.join('\n'));
+      await saveFile(`${base}-printable-bricks.zip`, zip(files));
+      toast(`${parts.length} brick file${parts.length > 1 ? 's' : ''} exported`);
+    }),
   guide: () =>
     run('Assembly guide', async () => {
       const { buildAssemblyGuide } = await import('./assemblyGuide');
@@ -286,16 +352,24 @@ export const exporters = {
       const { p, method, colors, base } = ctx();
       const d = drawings();
       const files: Record<string, Uint8Array | string> = {};
-      files[`cut/${base}-all-sheets.dxf`] = dxf(d, { includeSheetFrame: p.export.includeSheetFrame, textAs: p.export.textAs });
-      d.forEach((s) => {
-        const n = String(s.index + 1).padStart(2, '0');
-        files[`cut/sheet-${n}.dxf`] = dxf([s], { includeSheetFrame: p.export.includeSheetFrame, textAs: p.export.textAs });
-        files[`svg/sheet-${n}.svg`] = svg(s, p.export.svgStroke, p.export.includeSheetFrame, `${p.name} · sheet ${s.index + 1}`);
-      });
-      files[`${base}-sheets.pdf`] = await blobBytes(sheetsPdf(d, p.export.svgStroke, p.export.includeSheetFrame, p.name));
-      files[`flat/${base}-flat-parts.svg`] = svg(flatDrawing(), p.export.svgStroke, false, p.name);
+      if (d.length) {
+        files[`cut/${base}-all-sheets.dxf`] = dxf(d, { includeSheetFrame: p.export.includeSheetFrame, textAs: p.export.textAs });
+        d.forEach((s) => {
+          const n = String(s.index + 1).padStart(2, '0');
+          files[`cut/sheet-${n}.dxf`] = dxf([s], { includeSheetFrame: p.export.includeSheetFrame, textAs: p.export.textAs });
+          files[`svg/sheet-${n}.svg`] = svg(s, p.export.svgStroke, p.export.includeSheetFrame, `${p.name} · sheet ${s.index + 1}`);
+        });
+        files[`${base}-sheets.pdf`] = await blobBytes(sheetsPdf(d, p.export.svgStroke, p.export.includeSheetFrame, p.name));
+        files[`flat/${base}-flat-parts.svg`] = svg(flatDrawing(), p.export.svgStroke, false, p.name);
+      }
       files[`3d/${base}-assembled.stl`] = await blobBytes(await exportModel(bakeAssembly(method, colors), 'stl'));
       files[`3d/${base}-assembled.glb`] = await blobBytes(await exportModel(bakeAssembly(method, colors), 'glb'));
+      if (method.kit?.sticks?.length) files[`${base}-stick-cut-list.csv`] = cutListCsv(method);
+      if (method.kit?.bricks?.length) {
+        files[`lego/${base}.ldr`] = ldraw(method, p.name);
+        files[`lego/${base}-brick-list.csv`] = bomCsv(method);
+        files[`lego/${base}-building-instructions.pdf`] = await blobBytes(brickInstructions(method, p.name));
+      }
       const r = useResults.getState();
       if (r.base) files[`3d/${base}-base.stl`] = await blobBytes(await exportModel(meshGroup(r.base), 'stl'));
       files[`${base}.flatform`] = await blobBytes(await projectFileBlob());

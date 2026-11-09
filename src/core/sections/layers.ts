@@ -11,6 +11,7 @@ import { projectRange, slicePlane, type PlaneFrame } from '../mesh/slice';
 import { sectionRegion } from '../slices/section';
 import { circlePath, clipOpenPaths, difference, intersection, offsetPolygons, pointInRegion, strokePaths, union } from '../polygon/polygon';
 import { pinHoleDiameter } from '../joinery/holes';
+import { stackTabs } from '../joinery/bendTabs';
 import { dot3, type V2, type V3 } from '../math/vec';
 import { curvePolyline, frameFromNormal, guideSegments, sampleCurve } from './curve';
 import { sectionParts, type IdCounter } from './parts';
@@ -166,6 +167,26 @@ export function buildLayers(surface: MeshData, P: LayersParams, joinery: Joinery
       }
     }
 
+  // Bend tabs bridge the gap between parallel layers (direction mode only: the layers must share a frame).
+  const tabScores: Polyline2[][] = layers.map(() => []);
+  let tabs = 0;
+  if (joinery.kind === 'bendtabs') {
+    if (P.mode === 'direction') {
+      const res = stackTabs(
+        layers.map((l) => l.region),
+        t,
+        gap,
+        joinery.bendtabs,
+      );
+      res.features.forEach((F, k) => {
+        if (F.add.length) layers[k].region = union([...layers[k].region, ...F.add]);
+        if (F.sub.length) layers[k].region = difference(layers[k].region, F.sub);
+        tabScores[k].push(...F.score);
+      });
+      tabs = res.count;
+      if (gap > t * 8) warnings.push('The gap between layers is wide for bend tabs; long tabs are floppy. Reduce the spacing or use spacers.');
+    } else warnings.push('Bend tabs need parallel layers. Along a curve, use rods and spacers.');
+  }
   onProgress?.(0.6, 'Building layers');
   const parts: Part2D[] = [];
   const ids: IdCounter = new Map();
@@ -196,6 +217,7 @@ export function buildLayers(surface: MeshData, P: LayersParams, joinery: Joinery
           label: String(i + 1),
           holes: holeSets[i],
           engrave,
+          score: tabScores[i],
           labelParts: P.labelParts,
           textHeight: P.textHeight,
           meta: { layer: i + 1 },
@@ -214,7 +236,7 @@ export function buildLayers(surface: MeshData, P: LayersParams, joinery: Joinery
       spacers: spacerData.length ? { data: new Float32Array(spacerData), size: P.spacer.size, shape: P.spacer.shape } : undefined,
     },
     overlays: P.mode === 'curve' ? { guide: guideSegments(curvePolyline(surface, P.curve, 120)) } : {},
-    stats: { layers: parts.length ? layers.filter((l) => l.region.length).length : 0, pitch, gap: Math.round(gap * 10) / 10, rods: P.mode === 'curve' ? (P.rods > 0 ? 1 : 0) : rodPoints.length, spacers: spacerData.length / 6 },
+    stats: { layers: parts.length ? layers.filter((l) => l.region.length).length : 0, pitch, gap: Math.round(gap * 10) / 10, rods: P.mode === 'curve' ? (P.rods > 0 ? 1 : 0) : rodPoints.length, spacers: spacerData.length / 6, tabs },
     warnings,
     connectorData: {
       pinCount: P.mode === 'curve' ? 0 : rodPoints.length,
@@ -223,6 +245,7 @@ export function buildLayers(surface: MeshData, P: LayersParams, joinery: Joinery
       spacerShape: P.spacer.shape,
       spacerSize: P.spacer.size,
       spacerBore: holeD,
+      collars: joinery.kind === 'crossing' ? { bore: holeD, count: parts.reduce((n, q) => n + q.holes.length, 0) * 2 } : undefined,
     },
   };
 }

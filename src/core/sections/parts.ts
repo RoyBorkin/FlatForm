@@ -1,7 +1,7 @@
 /* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 /** Turn finished section regions into labelled, positioned parts. */
 import type { Circle2, Part2D, Path2, Polyline2 } from '../types';
-import { interiorPoint, pointInRegion, splitIslands } from '../polygon/polygon';
+import { interiorPoint, offsetPolygons, pointInRegion, splitIslands } from '../polygon/polygon';
 import { textPolylines, textWidth } from '../text/hershey';
 import { normalizePart, partId } from '../parts';
 import { planeMatrix } from '../slices/section';
@@ -17,6 +17,7 @@ export interface SectionPartInput {
   label: string;
   holes?: Circle2[];
   engrave?: Polyline2[];
+  score?: Polyline2[];
   labelParts: boolean;
   textHeight: number;
   meta?: Record<string, string | number>;
@@ -46,7 +47,7 @@ export function sectionParts(s: SectionPartInput, counter: IdCounter): Part2D[] 
         groupName: s.groupName,
         cut: island,
         holes,
-        score: [],
+        score: (s.score ?? []).filter((l) => l.pts.length && pointInRegion(l.pts[0], offsetPolygons(island, 0.5))),
         engrave,
         planar: { matrix: planeMatrix(s.frame, s.d - s.thickness / 2) },
         meta: { label, ...s.meta },

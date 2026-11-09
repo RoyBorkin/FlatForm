@@ -100,7 +100,83 @@ export type MethodKind =
   | 'layers'
   | 'meshlines'
   | 'triangles'
-  | 'classic';
+  | 'classic'
+  | 'sticks'
+  | 'bricks'
+  | 'stack';
+
+// ---------------------------------------------------------------- sticks
+
+/** Bought stock (round, square or tube) or laser-cut flat strips. */
+export type StickProfile = 'round' | 'square' | 'tube' | 'flat';
+
+export interface SticksParams {
+  /** Faces of the remeshed surface; 0 keeps the surface mesh. */
+  targetFaces: number;
+  profile: StickProfile;
+  preset: string;
+  /** Diameter (round, tube), side (square) or strip width (flat), mm. */
+  size: number;
+  /** Tube inner diameter, mm. */
+  inner: number;
+  /** Length of one bought stick, for the shopping count (mm). */
+  stockLength: number;
+  /** Cut lengths are rounded to this, so equal sticks can be cut together (mm). */
+  lengthStep: number;
+  labelSticks: boolean;
+  textHeight: number;
+}
+
+// ---------------------------------------------------------------- LEGO bricks
+
+export type BrickSize = '1x1' | '1x2' | '1x3' | '1x4' | '1x6' | '1x8' | '2x2' | '2x3' | '2x4' | '2x6' | '2x8';
+
+export interface BricksParams {
+  /** Build in full bricks (9.6 mm) or plates (3.2 mm). */
+  unit: 'brick' | 'plate';
+  hollow: boolean;
+  /** Wall thickness of a hollow build, in studs. */
+  shell: number;
+  sizes: BrickSize[];
+  /** Alternate brick direction every layer so joints overlap, like a brick wall. */
+  stagger: boolean;
+  colorMode: 'single' | 'layers' | 'height';
+  /** LDraw colour codes. */
+  color: number;
+  palette: number[];
+}
+
+// ---------------------------------------------------------------- stacked layers
+
+export type StackMode = 'laminate' | 'shells' | 'relief' | 'solid';
+
+export interface StackParams {
+  mode: StackMode;
+  /** Layers (laminate, relief, solid) or shells. */
+  count: number;
+  /** Direction for relief and solid stacks. */
+  azimuth: number;
+  elevation: number;
+  // laminated skins
+  targetFaces: number;
+  pieces: number;
+  seed: number;
+  /** Pins through every layer of a laminate, this far apart (mm). */
+  pinSpacing: number;
+  // nested shells
+  shellGap: number;
+  // relief
+  backing: boolean;
+  margin: number;
+  /** Depth mapping exponent: 1 = even, >1 more layers at the front. */
+  depthCurve: number;
+  // solid / relief
+  /** Rods through the stack (when the joinery uses holes). */
+  rods: number;
+  registration: boolean;
+  labelParts: boolean;
+  textHeight: number;
+}
 
 /**
  * A planar guide curve, drawn in one of the three main planes. Control points
@@ -270,7 +346,7 @@ export interface ClassicParams {
 
 // ---------------------------------------------------------------- joinery
 
-export type JoineryKind = 'screws' | 'printed' | 'none' | 'latches' | 'wire' | 'fingers' | 'flaticulation';
+export type JoineryKind = 'screws' | 'printed' | 'none' | 'latches' | 'wire' | 'fingers' | 'flaticulation' | 'junction' | 'crossing' | 'cardboard' | 'lego' | 'bendtabs';
 export type ConnectorKind = 'nodeHub' | 'snapPin' | 'angleBracket' | 'spacer' | 'hollowScrew';
 export type LatchKind = 'tabSlot' | 'arrow' | 'hook' | 'puzzle';
 
@@ -324,6 +400,43 @@ export interface JoineryParams {
     occupancy: number; // 0..1 of each edge filled with patterns
     stiffness: number; // 0..1 multiplier on X_ext (detent strength)
     breakTab: number; // mm, breakaway bridges along the cut edge (0 = none)
+  };
+  /** Printed hubs, one per junction, with a socket for every member that meets there. */
+  junction: {
+    socketDepth: number; // mm
+    wall: number; // mm
+    clearance: number; // mm, per side
+    core: number; // mm, extra hub radius
+    dedupe: boolean; // share one file between junctions with the same angles
+  };
+  /** Printed clips where parts cross (ribs) or a rod passes through a layer. */
+  crossing: {
+    size: number; // mm, clip reach from the crossing
+    depth: number; // mm, slot depth
+    wall: number; // mm
+    clearance: number; // mm
+  };
+  /** Printed channel connectors that grip two sheet edges at their angle (cardboard system). */
+  cardboard: {
+    length: number; // mm along the seam
+    depth: number; // mm the sheet sits in the channel
+    wall: number; // mm
+    clearance: number; // mm, total slot play (negative = press fit)
+    pitch: number; // mm between connectors on a long seam
+  };
+  /** Real LEGO Technic pins or axles through holes on the 8 mm grid. */
+  lego: {
+    element: 'pin' | 'axle';
+    fit: number; // mm added to 4.8 mm
+    pitch: number; // studs between holes along a seam
+  };
+  /** Tabs that pass through a slot in the next layer or panel and are bent over. */
+  bendtabs: {
+    width: number; // mm
+    fold: number; // mm folded flat under the other layer
+    bendRadius: number; // mm
+    pitch: number; // mm between tabs
+    clearance: number; // mm slot play
   };
 }
 
@@ -397,6 +510,9 @@ export interface ProjectParams {
   meshlines: MeshLinesParams;
   triangles: TrianglesParams;
   classic: ClassicParams;
+  sticks: SticksParams;
+  bricks: BricksParams;
+  stack: StackParams;
   joinery: JoineryParams;
   manufacturing: ManufacturingParams;
   material: MaterialParams;

@@ -85,3 +85,48 @@ export const WIRE_PRESETS = {
   rubber: { label: 'Rubber band', holeDiameter: 3, slotLength: 0, pitch: 22, edgeOffset: 3, stitch: 'notch' },
   zip: { label: 'Zip tie', holeDiameter: 2, slotLength: 5, pitch: 30, edgeOffset: 6, stitch: 'running' },
 } as const;
+
+/** Stick stock: bought rods, tubes and profiles, or laser-cut flat strips. */
+export const STICK_PRESETS: { id: string; label: string; profile: 'round' | 'square' | 'tube' | 'flat'; size: number; inner?: number; stock: number }[] = [
+  { id: 'toothpick', label: 'Toothpicks Ø2 × 65', profile: 'round', size: 2, stock: 65 },
+  { id: 'skewer', label: 'Bamboo skewers Ø3 × 250', profile: 'round', size: 3, stock: 250 },
+  { id: 'dowel6', label: 'Wood dowel Ø6 × 1000', profile: 'round', size: 6, stock: 1000 },
+  { id: 'dowel8', label: 'Wood dowel Ø8 × 1000', profile: 'round', size: 8, stock: 1000 },
+  { id: 'dowel10', label: 'Wood dowel Ø10 × 1000', profile: 'round', size: 10, stock: 1000 },
+  { id: 'carbon6', label: 'Carbon tube Ø6/4 × 1000', profile: 'tube', size: 6, inner: 4, stock: 1000 },
+  { id: 'alu8', label: 'Aluminium tube Ø8/6 × 1000', profile: 'tube', size: 8, inner: 6, stock: 1000 },
+  { id: 'square10', label: 'Square pine 10 × 1000', profile: 'square', size: 10, stock: 1000 },
+  { id: 'alusq10', label: 'Aluminium square 10 × 1000', profile: 'square', size: 10, stock: 1000 },
+  { id: 'flat', label: 'Laser-cut flat strips', profile: 'flat', size: 10, stock: 0 },
+];
+
+/** LEGO colours by LDraw code, with screen colours for the preview. */
+export const LEGO_COLORS: { code: number; name: string; hex: string }[] = [
+  { code: 4, name: 'Red', hex: '#c91a09' },
+  { code: 25, name: 'Orange', hex: '#fe8a18' },
+  { code: 191, name: 'Bright light orange', hex: '#f8bb3d' },
+  { code: 14, name: 'Yellow', hex: '#f2cd37' },
+  { code: 72, name: 'Dark bluish grey', hex: '#6c6e68' },
+  { code: 71, name: 'Light bluish grey', hex: '#a0a5a9' },
+  { code: 0, name: 'Black', hex: '#1b2a34' },
+  { code: 15, name: 'White', hex: '#f4f4f4' },
+  { code: 19, name: 'Tan', hex: '#e4cd9e' },
+  { code: 70, name: 'Reddish brown', hex: '#582a12' },
+  { code: 1, name: 'Blue', hex: '#0055bf' },
+  { code: 2, name: 'Green', hex: '#237841' },
+];
+
+/** LDraw part numbers for each footprint (long side along LDraw X). */
+export const LEGO_PARTS: Record<string, { brick: string; plate: string }> = {
+  '1x1': { brick: '3005', plate: '3024' },
+  '1x2': { brick: '3004', plate: '3023' },
+  '1x3': { brick: '3622', plate: '3623' },
+  '1x4': { brick: '3010', plate: '3710' },
+  '1x6': { brick: '3009', plate: '3666' },
+  '1x8': { brick: '3008', plate: '3460' },
+  '2x2': { brick: '3003', plate: '3022' },
+  '2x3': { brick: '3002', plate: '3021' },
+  '2x4': { brick: '3001', plate: '3020' },
+  '2x6': { brick: '2456', plate: '3795' },
+  '2x8': { brick: '3007', plate: '3034' },
+};

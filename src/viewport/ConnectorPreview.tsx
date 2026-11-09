@@ -7,10 +7,11 @@ import { useResults } from '@/state/results';
 import { geometry } from '@/state/engine';
 import type { ConnectorPart } from '@/core/connectors/connectors';
 import { meshDataToGeometry } from './geometry';
+import { groupJunctions } from '@/core/joinery/junction';
 import { useCssVar } from './useCssVar';
 
 /** Live preview of the printed connector, built by Manifold in the worker. */
-export default function ConnectorPreview() {
+export default function ConnectorPreview({ kit }: { kit?: 'junction' | 'crossing' | 'cardboard' } = {}) {
   const j = useProject((s) => s.project.joinery);
   const t = useProject((s) => s.project.material.thickness);
   const method = useProject((s) => s.project.method);
@@ -25,11 +26,13 @@ export default function ConnectorPreview() {
     let alive = true;
     const id = setTimeout(async () => {
       try {
-        const r = await geometry().connectors(
-          { kind: method === 'layers' && data?.spacers?.length ? 'spacer' : j.printed.connector, printed: j.printed, thickness: t, layers: method === 'lattice' ? layers : 1, stripWidth },
-          data ? { ...data, hubs: data.hubs?.slice(0, 1), bracketAngles: data.bracketAngles?.slice(0, 50) } : undefined,
-          1,
-        );
+        const r: ConnectorPart[] = kit
+          ? await geometry().kit({ kind: kit, joinery: j, thickness: t, data }, 2)
+          : await geometry().connectors(
+              { kind: method === 'layers' && data?.spacers?.length ? 'spacer' : j.printed.connector, printed: j.printed, thickness: t, layers: method === 'lattice' ? layers : 1, stripWidth },
+              data ? { ...data, hubs: data.hubs?.slice(0, 1), bracketAngles: data.bracketAngles?.slice(0, 50) } : undefined,
+              1,
+            );
         if (alive) {
           setParts(r);
           setErr(null);
@@ -42,11 +45,25 @@ export default function ConnectorPreview() {
       alive = false;
       clearTimeout(id);
     };
-  }, [j.printed, t, method, layers, stripWidth, data]);
+  }, [j, kit, t, method, layers, stripWidth, data]);
   const geos = useMemo(() => (parts ?? []).slice(0, 2).map((p) => meshDataToGeometry(p.mesh)), [parts]);
   useEffect(() => () => geos.forEach((g) => g.dispose()), [geos]);
   if (err) return <div className="connector-preview connector-preview--loading">Preview failed: {err}</div>;
   const total = parts?.reduce((s, p) => s + p.count, 0) ?? 0;
+  const kitSummary = useMemo(() => {
+    if (!kit || !data) return null;
+    if (kit === 'junction') {
+      const list = data.junctions ?? [];
+      const distinct = groupJunctions(list, j.junction.dedupe).length;
+      return list.length ? `${list.length} hubs, ${distinct} different shape${distinct > 1 ? 's' : ''}` : 'No junctions in this build';
+    }
+    if (kit === 'crossing') {
+      const n = (data.crossClips ?? []).reduce((a, c) => a + c.count, 0) + (data.collars?.count ?? 0);
+      return n ? `${n} to print` : 'No crossings in this build';
+    }
+    const n = (data.seamClips ?? []).reduce((a, c) => a + c.count, 0);
+    return n ? `${n} connectors, ${(data.seamClips ?? []).length} angle${(data.seamClips ?? []).length > 1 ? 's' : ''}` : 'No seams in this build';
+  }, [kit, data, j.junction.dedupe]);
   return (
     <figure className="connector-preview">
       <div className="connector-preview__canvas">
@@ -66,7 +83,7 @@ export default function ConnectorPreview() {
         </Canvas>
       </div>
       <figcaption className="muted small">
-        {parts ? `${parts.length > 1 && parts[0].count === 1 ? `${parts.length} unique pieces` : `${total} to print`} · drag to rotate` : 'Building preview…'}
+        {parts ? `${kitSummary ?? (parts.length > 1 && parts[0].count === 1 ? `${parts.length} unique pieces` : `${total} to print`)} · drag to rotate` : 'Building preview…'}
       </figcaption>
     </figure>
   );

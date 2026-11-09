@@ -4,7 +4,7 @@ import { useProject } from '@/state/project';
 import { useResults } from '@/state/results';
 import { MATERIAL_PRESETS, PRINT_BEDS, PRINT_MATERIALS, SHEET_PRESETS } from '@/core/presets';
 import type { ManufacturingParams, MaterialParams, Process, SheetParams } from '@/core/params';
-import { estimate } from '@/core/manufacturing/manufacturing';
+import { estimate, kitWeight } from '@/core/manufacturing/manufacturing';
 import { Callout, ColorInput, Field, NumberField, Section, Segmented, SelectField, SliderField, SwitchField, useUnits } from '../components/controls';
 
 const PROCESS_TEXT: Record<Process, string> = {
@@ -102,10 +102,13 @@ function ManufacturingSection() {
 
 function WeightReadout() {
   const parts = useResults((s) => s.method?.parts);
+  const kit = useResults((s) => s.method?.kit);
   const p = useProject((s) => s.project);
   const u = useUnits();
-  if (!parts?.length) return null;
-  const e = estimate(parts, p);
+  const k = kitWeight(kit, p);
+  if (!parts?.length && !k.weight) return null;
+  const e = estimate(parts ?? [], p);
+  e.weight += k.weight;
   return (
     <dl className="readout">
       <div>

@@ -10,7 +10,8 @@ import { remesh, edgeLengthForTriangles } from '../mesh/remesh';
 import { unfold } from '../unfold/unfold';
 import { buildPanelParts, oversizeWarning } from '../unfold/panels';
 import { flaticulationFold, foldLine } from '../joinery/edgeFeatures';
-import { seamFeature, seamLabelInset } from '../joinery/seams';
+import { AngleCounter, seamFeature, seamLabelInset } from '../joinery/seams';
+import { panelJunctions } from '../joinery/junction';
 import { getV } from '../math/vec';
 
 export interface FoldedInput {
@@ -34,6 +35,8 @@ export function buildFolded(input: FoldedInput): MethodResult {
   if (U.overlapSplits && !P.autoSplit) warnings.push('Some panels overlap when unfolded. Turn on auto-split.');
   input.onProgress?.(0.55, 'Unfold');
   const connectors: number[] = [];
+  const clips = new AngleCounter(5); // a cardboard channel takes a few degrees either way
+  const hubs = J.kind === 'junction' ? panelJunctions(U, J.junction, t) : null;
   const bracketAngles: number[] = [];
   let pinPairs = 0;
   let flatJoints = 0;
@@ -52,8 +55,10 @@ export function buildFolded(input: FoldedInput): MethodResult {
               flatJoints++;
             }
           : (ctx, F) => foldLine(ctx, F, P.foldLine, P.perforation),
+      vertexRelief: hubs ? (v) => hubs.relief.get(v) ?? 0 : undefined,
       seam: seamFeature(J, {
         glueTabWidth: P.tabs === 'glue' ? P.tabWidth : 0,
+        onClip: (_c, n, a) => clips.add(a, n),
         onHoles: (ctx, n) => {
           const c = ctx as typeof ctx & { a: number; b: number; g: number };
           const pa = getV(m.positions, c.a), pb = getV(m.positions, c.b);
@@ -72,10 +77,16 @@ export function buildFolded(input: FoldedInput): MethodResult {
   if (J.kind === 'flaticulation' && t < 1.5) warnings.push('Flaticulation needs a stiff board (the paper used 3 mm MDF). Thin sheet will not clutch.');
   return {
     parts,
-    assembly: { ...assembly, connectors: new Float32Array(connectors) },
+    assembly: { ...assembly, connectors: new Float32Array(connectors), hubs: hubs?.junctions.length ? new Float32Array(hubs.junctions.flatMap((h) => [...h.pos, h.core + J.junction.wall])) : undefined },
     overlays: {},
     stats: { faces: m.indices.length / 3, islands: U.islands.length, cutEdges: U.seams, flaticulated: flatJoints },
     warnings,
-    connectorData: { pinCount: pinPairs * 2, gripLength: t * 2, bracketAngles },
+    connectorData: {
+      pinCount: hubs ? hubs.junctions.length : pinPairs * 2,
+      gripLength: t * 2,
+      bracketAngles,
+      junctions: hubs?.junctions.length ? hubs.junctions : undefined,
+      seamClips: clips.total ? clips.list() : undefined,
+    },
   };
 }

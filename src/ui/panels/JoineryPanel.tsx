@@ -4,15 +4,17 @@ import { useProject } from '@/state/project';
 import { JOINERY_SUPPORT, pinHoleDiameter } from '@/core/joinery/holes';
 import { SCREW_PRESETS } from '@/core/presets';
 import type { ConnectorKind, JoineryKind, JoineryParams, LatchKind } from '@/core/params';
-import { Callout, Section, SegmentedField, SelectField, SliderField, useUnits } from '../components/controls';
+import { Callout, Section, SegmentedField, SelectField, SliderField, SwitchField, useUnits } from '../components/controls';
 import { LatchGlyph } from '../components/glyphs';
 import { JointPreview } from '../components/JointPreview';
 import { JOIN_LABEL, JOIN_TEXT } from '../labels';
 import { fingers, flaticulationFold, wireStitches } from '@/core/joinery/edgeFeatures';
+import { legoRow } from '@/core/joinery/seams';
+import { seamBendTabs } from '@/core/joinery/bendTabs';
 import { lessThanPattern, greaterThanPattern } from '@/core/joinery/flaticulation';
 import { WIRE_PRESETS } from '@/core/presets';
 
-const ALL_KINDS: JoineryKind[] = ['screws', 'printed', 'none', 'latches', 'wire', 'fingers', 'flaticulation'];
+const ALL_KINDS: JoineryKind[] = ['junction', 'screws', 'printed', 'none', 'latches', 'wire', 'fingers', 'cardboard', 'bendtabs', 'crossing', 'lego', 'flaticulation'];
 
 const ConnectorPreview = lazy(() => import('@/viewport/ConnectorPreview'));
 
@@ -215,6 +217,100 @@ export function JoineryPanel() {
         </>
       )}
       {j.kind === 'flaticulation' && <FlaticulationControls />}
+      {j.kind === 'junction' && (
+        <>
+          <Section title="Junction hubs">
+            <p className="muted small">
+              {method === 'sticks' || method === 'meshlines' || method === 'lattice'
+                ? 'One hub per node, with a socket for every stick, bar or strip at its real angle.'
+                : 'One hub at every corner where separate parts meet. Each part’s corner is cut back and slides into a fork.'}
+            </p>
+            <Suspense fallback={<div className="connector-preview connector-preview--loading">Loading preview…</div>}>
+              <ConnectorPreview kit="junction" />
+            </Suspense>
+          </Section>
+          <Section title="Dimensions">
+            <SliderField label="Socket depth" value={j.junction.socketDepth} min={3} max={60} step={0.5} unit="len" onChange={(v) => set((x) => void (x.junction.socketDepth = v))} />
+            <SliderField label="Wall" value={j.junction.wall} min={0.8} max={6} step={0.1} unit="len" onChange={(v) => set((x) => void (x.junction.wall = v))} />
+            <SliderField label="Fit clearance" hint="Per side. 0.1–0.2 mm on a well-tuned printer." value={j.junction.clearance} min={-0.1} max={1} step={0.01} unit="len" onChange={(v) => set((x) => void (x.junction.clearance = v))} />
+            <SliderField label="Extra core" hint="Makes the hub bigger and stronger; members get shorter to match." value={j.junction.core} min={0} max={20} step={0.5} unit="len" onChange={(v) => set((x) => void (x.junction.core = v))} />
+            <SwitchField label="Share identical hubs" hint="Hubs with the same angles (to 1°) print from one file." checked={j.junction.dedupe} onChange={(v) => set((x) => void (x.junction.dedupe = v))} />
+          </Section>
+        </>
+      )}
+      {j.kind === 'crossing' && (
+        <>
+          <Section title="Crossing clips">
+            <p className="muted small">
+              {method === 'waffle' || method === 'classic'
+                ? 'A cap for each end of every slotted crossing, with its two slots at that crossing’s angle.'
+                : 'A collar on each side of a layer where a rod passes through, gripping the rod.'}
+            </p>
+            <Suspense fallback={<div className="connector-preview connector-preview--loading">Loading preview…</div>}>
+              <ConnectorPreview kit="crossing" />
+            </Suspense>
+          </Section>
+          <Section title="Dimensions">
+            <SliderField label="Reach" value={j.crossing.size} min={4} max={60} step={0.5} unit="len" onChange={(v) => set((x) => void (x.crossing.size = v))} />
+            <SliderField label="Depth" value={j.crossing.depth} min={2} max={40} step={0.5} unit="len" onChange={(v) => set((x) => void (x.crossing.depth = v))} />
+            <SliderField label="Wall" value={j.crossing.wall} min={0.8} max={6} step={0.1} unit="len" onChange={(v) => set((x) => void (x.crossing.wall = v))} />
+            <SliderField label="Fit clearance" value={j.crossing.clearance} min={-0.1} max={1} step={0.01} unit="len" onChange={(v) => set((x) => void (x.crossing.clearance = v))} />
+            {(method === 'slices' || method === 'layers' || method === 'stack') && <SliderField label="Rod hole" value={j.noneHoleDiameter} min={1} max={20} step={0.05} unit="len" onChange={(v) => set((x) => void (x.noneHoleDiameter = v))} />}
+          </Section>
+        </>
+      )}
+      {j.kind === 'cardboard' && (
+        <>
+          <Section title="Cardboard connectors">
+            <p className="muted small">Each seam gets printed channels that grip both edges at the seam’s angle. Panels stop short of the seam to make room; engraved marks show where each connector goes.</p>
+            <Suspense fallback={<div className="connector-preview connector-preview--loading">Loading preview…</div>}>
+              <ConnectorPreview kit="cardboard" />
+            </Suspense>
+          </Section>
+          <Section title="Dimensions">
+            <SliderField label="Length" value={j.cardboard.length} min={6} max={120} step={0.5} unit="len" onChange={(v) => set((x) => void (x.cardboard.length = v))} />
+            <SliderField label="Grip depth" value={j.cardboard.depth} min={3} max={40} step={0.5} unit="len" onChange={(v) => set((x) => void (x.cardboard.depth = v))} />
+            <SliderField label="Wall" value={j.cardboard.wall} min={0.8} max={5} step={0.1} unit="len" onChange={(v) => set((x) => void (x.cardboard.wall = v))} />
+            <SliderField label="Slot play" hint="Added to the sheet thickness. Negative for a press fit on soft board." value={j.cardboard.clearance} min={-0.5} max={1} step={0.01} unit="len" onChange={(v) => set((x) => void (x.cardboard.clearance = v))} />
+            <SliderField label="Spacing on long seams" value={j.cardboard.pitch} min={20} max={400} step={1} unit="len" onChange={(v) => set((x) => void (x.cardboard.pitch = v))} />
+          </Section>
+        </>
+      )}
+      {j.kind === 'lego' && (
+        <Section title="LEGO Technic">
+          <SegmentedField
+            label="Element"
+            hint="Pins clip two parts together; axles (with bushes) run through a whole stack. Axle holes are cross-shaped and stop rotation."
+            value={j.lego.element}
+            onChange={(v) => set((x) => void (x.lego.element = v))}
+            options={[
+              { value: 'pin', label: 'Pins (Ø4.8)' },
+              { value: 'axle', label: 'Axles (+)' },
+            ]}
+          />
+          <SliderField label="Hole spacing" hint="In studs (8 mm) along each seam, so beams and plates line up." value={j.lego.pitch} min={1} max={10} step={1} unit=" studs" onChange={(v) => set((x) => void (x.lego.pitch = v))} />
+          <SliderField label="Fit" hint="Added to 4.8 mm. Laser kerf usually needs 0–0.1 mm." value={j.lego.fit} min={-0.2} max={0.5} step={0.01} unit="len" onChange={(v) => set((x) => void (x.lego.fit = v))} />
+          {method !== 'lattice' && method !== 'slices' && method !== 'layers' && method !== 'stack' && method !== 'meshlines' && (
+            <JointPreview label="LEGO holes along a seam" length={64} thickness={t} draw={(c, f) => void legoRow(c, f, j)} />
+          )}
+          <p className="muted small">Technic pins hold best in sheet about 3–4 mm thick; thinner stacks of two parts suit half pins (4274).</p>
+        </Section>
+      )}
+      {j.kind === 'bendtabs' && (
+        <Section title="Bend tabs">
+          <p className="muted small">
+            {method === 'slices' || method === 'layers' || method === 'stack'
+              ? 'Tabs grow from each layer’s edge, bend down through a slot in the layer below and fold flat underneath.'
+              : 'Tabs wrap round each seam into a slot in the neighbouring panel and are folded flat behind it.'}
+          </p>
+          {method !== 'slices' && method !== 'layers' && method !== 'stack' && <JointPreview label="Bend tabs along a seam" length={Math.max(40, j.bendtabs.pitch * 2.2)} thickness={t} draw={(c, f) => seamBendTabs(c, f, j.bendtabs)} />}
+          <SliderField label="Tab width" value={j.bendtabs.width} min={2} max={40} step={0.5} unit="len" onChange={(v) => set((x) => void (x.bendtabs.width = v))} />
+          <SliderField label="Fold-under length" value={j.bendtabs.fold} min={1} max={30} step={0.5} unit="len" onChange={(v) => set((x) => void (x.bendtabs.fold = v))} />
+          <SliderField label="Bend radius" hint="About the sheet thickness for metal; 0 for card." value={j.bendtabs.bendRadius} min={0} max={6} step={0.1} unit="len" onChange={(v) => set((x) => void (x.bendtabs.bendRadius = v))} />
+          <SliderField label="Spacing" value={j.bendtabs.pitch} min={10} max={300} step={1} unit="len" onChange={(v) => set((x) => void (x.bendtabs.pitch = v))} />
+          <SliderField label="Slot play" value={j.bendtabs.clearance} min={0} max={1} step={0.01} unit="len" onChange={(v) => set((x) => void (x.bendtabs.clearance = v))} />
+        </Section>
+      )}
     </>
   );
 }

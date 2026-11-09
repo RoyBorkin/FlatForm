@@ -134,6 +134,27 @@ export function estimate(parts: Part2D[], p: ProjectParams): Estimate {
   return { weight, minutes: (len * passes) / Math.max(1, p.material.cutSpeed) / 60, cutLength: len, volume };
 }
 
+/**
+ * Weight of the parts that are not cut from sheet: bought sticks (by profile
+ * and material) and LEGO bricks (by stud count). Grams.
+ */
+export function kitWeight(kit: import('../types').Kit | undefined, p: ProjectParams): { weight: number; label: string } {
+  if (kit?.bricks?.length) {
+    const plate = kit.brickUnit === 'plate';
+    const studs = kit.bricks.reduce((s, b) => s + b.w * b.d, 0);
+    // About 0.29 g per stud for bricks (a 2×4 weighs ~2.3 g), 0.2 g for plates.
+    return { weight: studs * (plate ? 0.2 : 0.29), label: `${kit.bricks.length.toLocaleString()} ${plate ? 'plates' : 'bricks'}` };
+  }
+  if (kit?.sticks?.length) {
+    const S = p.sticks;
+    const len = kit.sticks.reduce((a, r) => a + r.length * r.count, 0); // mm
+    const area = S.profile === 'square' ? S.size * S.size : S.profile === 'tube' ? (Math.PI / 4) * (S.size ** 2 - Math.min(S.inner, S.size - 0.2) ** 2) : (Math.PI / 4) * S.size ** 2;
+    const density = /alu/.test(S.preset) ? 2.7 : /carbon/.test(S.preset) ? 1.6 : /skewer/.test(S.preset) ? 0.7 : 0.6; // g/cm³
+    return { weight: ((area * len) / 1000) * density, label: `${kit.sticks.reduce((a, r) => a + r.count, 0).toLocaleString()} sticks` };
+  }
+  return { weight: 0, label: '' };
+}
+
 function polyLen(pts: Path2) {
   let l = 0;
   for (let i = 1; i < pts.length; i++) l += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);

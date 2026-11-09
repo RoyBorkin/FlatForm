@@ -16,6 +16,8 @@ export function Viewport() {
   const busy = useResults((s) => s.busy);
   const stage = useResults((s) => s.stage);
   const hasParts = useResults((s) => !!s.method?.parts.length);
+  const kitOnly = useResults((s) => !!s.method && !s.method.parts.length && !!(s.method.kit?.bricks?.length || s.method.kit?.sticks?.length));
+  const brickKit = useResults((s) => !!s.method?.kit?.bricks?.length);
   return (
     <main className="viewport" aria-label="Viewport">
       {view === '3d' ? (
@@ -24,6 +26,12 @@ export function Viewport() {
         </Suspense>
       ) : hasParts ? (
         <Canvas2D mode={view === 'flat' ? 'flat' : 'sheets'} />
+      ) : kitOnly ? (
+        <div className="viewport__empty">
+          {brickKit
+            ? 'A LEGO build has nothing to cut. The brick list is in the Method panel, and the Export step gives an LDraw model, printable bricks and layer-by-layer instructions.'
+            : 'Bought sticks have nothing to cut from sheet. The cut list is in the Method panel; switch to flat strips to cut them from sheet instead.'}
+        </div>
       ) : (
         <div className="viewport__empty">Parts appear here once the method has run.</div>
       )}

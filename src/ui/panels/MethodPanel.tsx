@@ -12,6 +12,7 @@ import { JOINERY_SUPPORT } from '@/core/joinery/holes';
 import { FlexHingeControls, MinimalControls, PapercraftControls } from './method/UnfoldControls';
 import { ClassicControls, LayersControls } from './method/SectionControls';
 import { MeshLinesControls, TrianglesControls } from './method/FrameControls';
+import { BricksControls, StackControls, SticksControls } from './method/KitControls';
 
 const FAMILIES = ['Surface', 'Frames', 'Sections', 'Folded'] as const;
 
@@ -71,6 +72,9 @@ export function MethodPanel() {
       {method === 'classic' && <ClassicControls />}
       {method === 'meshlines' && <MeshLinesControls />}
       {method === 'triangles' && <TrianglesControls />}
+      {method === 'sticks' && <SticksControls />}
+      {method === 'bricks' && <BricksControls />}
+      {method === 'stack' && <StackControls />}
     </>
   );
 }

@@ -1,7 +1,7 @@
 /* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 /** Interlocking waffle: two crossing families of ribs joined by half-slots. */
 import type { MeshData, MethodResult, Part2D, Path2, Polyline2 } from '../types';
-import type { MaterialParams, WaffleParams } from '../params';
+import type { JoineryParams, MaterialParams, WaffleParams } from '../params';
 import { projectRange, slicePlane, type PlaneFrame } from '../mesh/slice';
 import { sectionRegion, planeMatrix } from './../slices/section';
 import { difference, intersection, interiorPoint, splitIslands, union, offsetPolygons } from '../polygon/polygon';
@@ -59,7 +59,7 @@ function slotPoly(c: number, width: number, from: number, to: number, leadIn: nu
   return dir > 0 ? pts : pts.reverse();
 }
 
-export function buildWaffle(surface: MeshData, P: WaffleParams, material: MaterialParams, onProgress?: (f: number, s: string) => void): MethodResult {
+export function buildWaffle(surface: MeshData, P: WaffleParams, material: MaterialParams, onProgress?: (f: number, s: string) => void, J?: JoineryParams): MethodResult {
   const warnings: string[] = [];
   const t = material.thickness;
   const [ka, kb, kl] = P.plane === 'xy' ? ['x', 'y', 'z'] : P.plane === 'xz' ? ['x', 'z', 'y'] : ['y', 'z', 'x'];
@@ -165,7 +165,7 @@ export function buildWaffle(surface: MeshData, P: WaffleParams, material: Materi
   if (splitRibs.length)
     warnings.push(`${splitRibs.length} rib${splitRibs.length > 1 ? 's cross' : ' crosses'} separate parts of the shape, so ${splitRibs.length > 1 ? 'they are' : 'it is'} cut into several pieces (${splitRibs.slice(0, 6).join(', ')}${splitRibs.length > 6 ? '…' : ''}). Each piece is still held by its slots.`);
   if (joints === 0) warnings.push('No rib crossings found. Add more ribs or reduce the inset.');
-  return { parts, assembly: { kind: 'planar', thickness: t }, overlays: {}, stats: { ribsA: A.ribs.length, ribsB: B.ribs.length, joints }, warnings, connectorData: { pinCount: 0, gripLength: t, crossings: joints } };
+  return { parts, assembly: { kind: 'planar', thickness: t }, overlays: {}, stats: { ribsA: A.ribs.length, ribsB: B.ribs.length, joints }, warnings, connectorData: { pinCount: 0, gripLength: t, crossings: joints, crossClips: J?.kind === 'crossing' && joints ? [{ angle: 90, count: joints * 2 }] : undefined } };
 }
 
 function insideAny(p: V2, region: Path2[]): boolean {

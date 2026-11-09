@@ -15,6 +15,17 @@ export function NestPanel() {
   const setUI = useUI((s) => s.set);
   const set = (fn: (x: NestParams) => void) => update((p) => fn(p.nest));
   const groupNames = new Map((method?.parts ?? []).map((p) => [p.group, p.groupName]));
+  if (method && !method.parts.length && method.kit)
+    return (
+      <Section title="Nesting">
+        <Callout tone="info">
+          {method.kit.bricks?.length
+            ? 'This build uses LEGO bricks, so there are no sheet parts to nest.'
+            : 'These sticks are bought stock, so there are no sheet parts to nest. The cut list in the Method panel shows how to cut them from stock lengths.'}
+          {method.assembly.hubs ? ' The junction hubs are 3D printed and come with the export.' : ''}
+        </Callout>
+      </Section>
+    );
   return (
     <>
       <Section title="Nesting">

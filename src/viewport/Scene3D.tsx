@@ -23,7 +23,7 @@ import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { useResults } from '@/state/results';
 import { useUI, useLayerColors } from '@/state/ui';
 import { useProject } from '@/state/project';
-import { meshDataToGeometry, partExtrusion, pinMatrices, stripMatrices, unitBox, unitDisc, unitPin, panelsGeometry, spacerGeometry } from './geometry';
+import { meshDataToGeometry, partExtrusion, pinMatrices, stripMatrices, unitBox, unitDisc, unitPin, panelsGeometry, spacerGeometry, rodMatrices, hubMatrices, brickMatrices, unitRod, unitSphere, studGeometry } from './geometry';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { layerMaterial, stockMaterial } from './materials';
 import { SkeletonEditor3D } from './SkeletonEditor3D';
@@ -285,9 +285,69 @@ function useMaterialFor() {
 
 function Assembly({ method }: { method: MethodResult }) {
   const A = method.assembly;
-  if (A.kind === 'lattice') return <LatticeView method={method} />;
-  if (A.kind === 'planar') return <PlanarView method={method} />;
-  return <PanelsView method={method} />;
+  const base = A.kind === 'lattice' ? <LatticeView method={method} /> : A.kind === 'planar' ? <PlanarView method={method} /> : <PanelsView method={method} />;
+  return (
+    <>
+      {base}
+      {A.rods && <Rods rods={A.rods} />}
+      {A.hubs && <Hubs hubs={A.hubs} />}
+      {A.bricks && <Bricks method={method} />}
+    </>
+  );
+}
+
+/** A plain instanced mesh with an optional colour per instance. */
+function Batch({ geo, matrices, colors, color = '#ffffff', roughness = 0.5, metalness = 0.05 }: { geo: BufferGeometry; matrices: Matrix4[]; colors?: string[]; color?: string; roughness?: number; metalness?: number }) {
+  const ref = useRef<InstancedMesh>(null);
+  const invalidate = useThree((st) => st.invalidate);
+  useEffect(() => {
+    const m = ref.current;
+    if (!m) return;
+    matrices.forEach((x, i) => m.setMatrixAt(i, x));
+    m.instanceMatrix.needsUpdate = true;
+    if (colors) {
+      const c = new Color();
+      colors.forEach((h, i) => m.setColorAt(i, c.set(h)));
+      if (m.instanceColor) m.instanceColor.needsUpdate = true;
+    }
+    m.computeBoundingSphere();
+    invalidate();
+  }, [matrices, colors, invalidate]);
+  useEffect(() => () => geo.dispose(), [geo]);
+  if (!matrices.length) return null;
+  return (
+    <instancedMesh key={matrices.length} ref={ref} args={[geo, undefined, matrices.length]} castShadow receiveShadow>
+      <meshStandardMaterial color={colors ? '#ffffff' : color} roughness={roughness} metalness={metalness} />
+    </instancedMesh>
+  );
+}
+
+/** Sticks, toothpicks and profiles, drawn as cylinders or square bars. */
+function Rods({ rods }: { rods: NonNullable<MethodResult['assembly']['rods']> }) {
+  const mats = useMemo(() => rodMatrices(rods), [rods]);
+  const geo = useMemo(() => (rods.profile === 'square' ? unitBox() : unitRod()), [rods.profile]);
+  const metal = rods.profile === 'tube';
+  return <Batch geo={geo} matrices={mats} color={metal ? '#9aa0a6' : '#c8a26b'} roughness={metal ? 0.3 : 0.65} metalness={metal ? 0.8 : 0} />;
+}
+
+/** Printed junction hubs as spheres at their core size. */
+function Hubs({ hubs }: { hubs: Float32Array }) {
+  const mats = useMemo(() => hubMatrices(hubs), [hubs]);
+  const geo = useMemo(unitSphere, []);
+  return <Batch geo={geo} matrices={mats} color="#faaf40" roughness={0.55} />;
+}
+
+/** LEGO build: one box per brick plus the studs that show. */
+function Bricks({ method }: { method: MethodResult }) {
+  const B = useMemo(() => brickMatrices(method), [method]);
+  const box = useMemo(unitBox, []);
+  const stud = useMemo(studGeometry, []);
+  return (
+    <>
+      <Batch geo={box} matrices={B.boxes} colors={B.boxColors} roughness={0.35} />
+      <Batch geo={stud} matrices={B.studs} colors={B.studColors} roughness={0.35} />
+    </>
+  );
 }
 
 const tmpColor = new Color();
@@ -559,7 +619,7 @@ function PanelsView({ method }: { method: MethodResult }) {
       const isl = p.island[f];
       if (isl === selIsland) c.set(accent);
       else {
-        c.set(colorBy === 'material' ? stock : colors[0]);
+        c.set(colorBy === 'material' ? stock : colors[(method.parts[isl]?.group ?? 0) % colors.length]);
         c.multiplyScalar(0.6 + ((isl * 0.37) % 1) * 0.5);
       }
       for (let v = 0; v < 24; v++) col.set([c.r, c.g, c.b], (f * 24 + v) * 3);

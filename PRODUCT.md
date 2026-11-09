@@ -25,7 +25,7 @@ Author: Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/. The n
 
 **The slicer for 2D fabrication.** A 3D-printer slicer turns a model into layers and toolpaths for one machine; FlatForm turns a model into flat parts for 2D machines (laser cutter, CNC router, paper/vinyl cutter, or a 3D printer printing flat), plus the joinery, numbering, nesting and files needed to build it back in 3D. Construction method, joinery and making settings play the role that layer height, infill and supports play in a print slicer.
 
-One tool that covers the whole route from shape to cut file — modelling, surface prep, eleven construction methods, seven kinds of joinery, laser/CNC/3D-print making and nesting — with every parameter exposed, without needing a Grasshopper definition.
+One tool that covers the whole route from shape to cut file — modelling, surface prep, fourteen construction methods, twelve kinds of joinery, laser/CNC/3D-print making and nesting — with every parameter exposed, without needing a Grasshopper definition.
 
 ## Operating Context
 

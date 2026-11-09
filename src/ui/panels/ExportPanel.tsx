@@ -1,5 +1,6 @@
 /* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
-import { Box, FileCode2, FileText, Layers, Package, Printer, Scissors, Shapes, Table2, Archive, BookOpen, Save } from 'lucide-react';
+import { Box, FileCode2, FileText, Layers, Package, Printer, Scissors, Shapes, Table2, Archive, BookOpen, Save, Blocks, Ruler } from 'lucide-react';
+import { printedKit } from '@/io/export/kitExports';
 import { useState, type ReactNode } from 'react';
 import { useProject } from '@/state/project';
 import { useResults } from '@/state/results';
@@ -14,6 +15,19 @@ export function ExportPanel() {
   const process = useProject((s) => s.project.manufacturing.process);
   const hasSpacers = useResults((s) => !!s.method?.connectorData?.spacers?.length);
   const printable = joinKind === 'printed' || hasSpacers;
+  const project = useProject((s) => s.project);
+  const method = useResults((s) => s.method);
+  const kit = printedKit(project, method);
+  const hasSheets = !!method?.parts.length;
+  const sticks = method?.kit?.sticks;
+  const bricks = method?.kit?.bricks;
+  const kitTitle = kit === 'junction' ? 'Junction hubs' : kit === 'crossing' ? 'Crossing clips & collars' : 'Cardboard connectors';
+  const kitText =
+    kit === 'junction'
+      ? `${method?.connectorData?.junctions?.length ?? 0} hubs, one STL per distinct shape`
+      : kit === 'crossing'
+        ? `${(method?.connectorData?.crossClips ?? []).reduce((a, c) => a + c.count, 0) + (method?.connectorData?.collars?.count ?? 0)} parts, one STL per angle`
+        : `${(method?.connectorData?.seamClips ?? []).reduce((a, c) => a + c.count, 0)} connectors, one STL per angle`;
   const [fmtPlate, setFmtPlate] = useState<ModelFormat>('3mf');
   const update = useProject((s) => s.update);
   const ready = useResults((s) => !!s.method && !!s.nest && !s.busy);
@@ -44,7 +58,49 @@ export function ExportPanel() {
           <Callout tone="info">Exports unlock when the parts and sheets are up to date.</Callout>
         </div>
       )}
-      {process === 'print3d' && (
+      {(sticks?.length || bricks?.length || kit) && (
+        <Section title={bricks?.length ? 'LEGO build' : 'Kit'}>
+          {bricks?.length ? (
+            <>
+              <ExportRow icon={<Blocks size={16} aria-hidden />} title="LDraw model" text="Opens in BrickLink Studio, LeoCAD and LDView; one step per layer">
+                <Button variant="primary" size="sm" onClick={go('ldr', exporters.ldraw)} disabled={!ready || !!busy}>
+                  .ldr
+                </Button>
+              </ExportRow>
+              <ExportRow icon={<BookOpen size={16} aria-hidden />} title="Building instructions" text="Parts list, then a plan of every layer">
+                <Button size="sm" onClick={go('bguide', exporters.brickGuide)} disabled={!ready || !!busy}>
+                  {busy === 'bguide' ? 'Writing…' : 'PDF'}
+                </Button>
+              </ExportRow>
+              <ExportRow icon={<Table2 size={16} aria-hidden />} title="Brick list" text="Part numbers, colours and counts, ready to order">
+                <Button size="sm" onClick={go('blist', exporters.brickList)} disabled={!ready || !!busy}>
+                  CSV
+                </Button>
+              </ExportRow>
+              <ExportRow icon={<Package size={16} aria-hidden />} title="Printable bricks" text="LEGO-compatible bricks to print, one STL per size">
+                <Button size="sm" onClick={go('pbricks', exporters.printBricks)} disabled={!ready || !!busy}>
+                  {busy === 'pbricks' ? 'Building…' : 'STL'}
+                </Button>
+              </ExportRow>
+            </>
+          ) : null}
+          {sticks?.length ? (
+            <ExportRow icon={<Ruler size={16} aria-hidden />} title="Stick cut list" text={`${sticks.reduce((a, s2) => a + s2.count, 0)} sticks in ${sticks.length} lengths, with stock use`}>
+              <Button variant="primary" size="sm" onClick={go('cut', exporters.cutList)} disabled={!ready || !!busy}>
+                CSV
+              </Button>
+            </ExportRow>
+          ) : null}
+          {kit && (
+            <ExportRow icon={<Package size={16} aria-hidden />} title={kitTitle} text={kitText}>
+              <Button variant={sticks?.length ? 'secondary' : 'primary'} size="sm" onClick={go('kit', exporters.kit)} disabled={!ready || !!busy}>
+                {busy === 'kit' ? 'Building…' : 'STL'}
+              </Button>
+            </ExportRow>
+          )}
+        </Section>
+      )}
+      {process === 'print3d' && hasSheets && (
         <Section title="Print plates">
           <ExportRow icon={<Printer size={16} aria-hidden />} title="Plates" text={`${sheets} plate${sheets === 1 ? '' : 's'}, parts laid flat at sheet thickness`}>
             <div className="btn-row btn-row--tight">
@@ -56,6 +112,7 @@ export function ExportPanel() {
           </ExportRow>
         </Section>
       )}
+      {hasSheets && (
       <Section title={process === 'print3d' ? 'Outlines' : 'Cut files'}>
         <ExportRow icon={<Scissors size={16} aria-hidden />} title="DXF cut file" text={`${sheets} sheet${sheets === 1 ? '' : 's'} · layers CUT_INNER, CUT_OUTER, ENGRAVE, SCORE`}>
           <Button variant="primary" size="sm" onClick={go('dxf', exporters.dxf)} disabled={!ready || !!busy}>
@@ -94,6 +151,7 @@ export function ExportPanel() {
         <SwitchField label="Draw sheet outline" checked={e.includeSheetFrame} onChange={(v) => set((x) => void (x.includeSheetFrame = v))} />
         <SliderField label="Line width (SVG/PDF)" value={e.svgStroke} min={0.001} max={1} step={0.001} unit="len" onChange={(v) => set((x) => void (x.svgStroke = v))} />
       </Section>
+      )}
       <Section title="3D">
         <ExportRow icon={<Box size={16} aria-hidden />} title="Assembled model" text="The sheet parts in place, at real thickness">
           <div className="btn-row btn-row--tight">
@@ -127,11 +185,13 @@ export function ExportPanel() {
         </ExportRow>
       </Section>
       <Section title="Documents">
-        <ExportRow icon={<BookOpen size={16} aria-hidden />} title="Assembly guide" text="Steps, sheets and a page for every part">
-          <Button size="sm" onClick={go('guide', exporters.guide)} disabled={!ready || !!busy}>
-            {busy === 'guide' ? `Writing ${Math.round((guideProgress ?? 0) * 100)}%` : 'PDF'}
-          </Button>
-        </ExportRow>
+        {hasSheets && (
+          <ExportRow icon={<BookOpen size={16} aria-hidden />} title="Assembly guide" text="Steps, sheets and a page for every part">
+            <Button size="sm" onClick={go('guide', exporters.guide)} disabled={!ready || !!busy}>
+              {busy === 'guide' ? `Writing ${Math.round((guideProgress ?? 0) * 100)}%` : 'PDF'}
+            </Button>
+          </ExportRow>
+        )}
         <ExportRow icon={<Table2 size={16} aria-hidden />} title="Parts list & stats" text="Sizes, cut length, sheet positions">
           <div className="btn-row btn-row--tight">
             <Button size="sm" onClick={go('csv', () => exporters.partsList('csv'))} disabled={!ready || !!busy}>
@@ -153,7 +213,8 @@ export function ExportPanel() {
           {busy === 'all' ? 'Packing…' : 'Export everything (.zip)'}
         </Button>
         <p className="muted small center">
-          <FileText size={12} aria-hidden /> DXF + SVG per sheet, PDF, flat parts, 3D models and the project.
+          <FileText size={12} aria-hidden /> {hasSheets ? 'DXF + SVG per sheet, PDF, flat parts, 3D models' : '3D models'}
+          {bricks?.length ? ', the LDraw model and instructions' : sticks?.length ? ', the cut list' : ''} and the project.
         </p>
       </div>
     </>

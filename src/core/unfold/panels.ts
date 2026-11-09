@@ -6,7 +6,7 @@
  * handled here once for every panel-based method.
  */
 import type { MethodResult, Part2D, Path2, Polyline2 } from '../types';
-import { difference, intersection, offsetPolygons, regionArea, union, clipOpenPaths, interiorPoint } from '../polygon/polygon';
+import { circlePath, difference, intersection, offsetPolygons, regionArea, union, clipOpenPaths, interiorPoint } from '../polygon/polygon';
 import { textPolylines, textWidth } from '../text/hershey';
 import { normalizePart, partId } from '../parts';
 import { emptyFeatures, type EdgeCtx, type Features } from '../joinery/edgeFeatures';
@@ -15,6 +15,12 @@ import type { V2 } from '../math/vec';
 
 export interface PanelConfig {
   groupName: string;
+  /** Part group (letter and colour); default 0. */
+  group?: number;
+  /** Cut each part's corner back by this radius at a mesh vertex (junction hubs). */
+  vertexRelief?: (v: number) => number;
+  /** Called for every open-boundary edge (rims of open surfaces). */
+  rim?: (ctx: EdgeCtx, f: Features) => void;
   thickness: number;
   /** Called once per fold inside an island. */
   fold?: (ctx: EdgeCtx, f: Features) => void;
@@ -50,7 +56,10 @@ export function buildPanelParts(U: Unfolded, cfg: PanelConfig, warnings: string[
           if (f < ctx.g) cfg.fold?.(ctx, F);
           continue;
         }
-        if (ctx.g < 0) continue; // open boundary: plain cut
+        if (ctx.g < 0) {
+          cfg.rim?.(ctx, F); // open boundary: plain cut unless the method decorates rims
+          continue;
+        }
         cfg.onSeam?.(ctx, f);
         if (cfg.numberSeams && ctx.num) {
           const label = String(ctx.num);
@@ -68,6 +77,19 @@ export function buildPanelParts(U: Unfolded, cfg: PanelConfig, warnings: string[
         cfg.seam?.(ctx, F);
       }
     cfg.island?.(id, faces, region, F);
+    if (cfg.vertexRelief) {
+      // Corner relief for junction hubs, at every vertex of the island that has one.
+      const seen = new Set<number>();
+      for (const f of faces)
+        for (let k = 0; k < 3; k++) {
+          const v = U.m.indices[f * 3 + k];
+          if (seen.has(v)) continue;
+          seen.add(v);
+          const r = cfg.vertexRelief(v);
+          const q = U.pos2.get(`${f}:${v}`);
+          if (r > 0 && q) F.sub.push(circlePath(q[0], q[1], r, 32));
+        }
+    }
     let cut = region;
     if (F.add.length) {
       const inner = offsetPolygons(region, -0.05);
@@ -83,7 +105,7 @@ export function buildPanelParts(U: Unfolded, cfg: PanelConfig, warnings: string[
     const perforations: Polyline2[] = F.perforations.length
       ? clipOpenPaths(F.perforations.map((p) => p.pts), offsetPolygons(cut, 0.01)).map((pts) => ({ pts }))
       : [];
-    const pid = partId(0, id + 1);
+    const pid = partId(cfg.group ?? 0, id + 1);
     if (cfg.pieceLabels) {
       const ip = interiorPoint(cut, F.holes);
       const h = Math.min(cfg.textHeight * 1.4, ip.d * 0.6);
@@ -91,7 +113,7 @@ export function buildPanelParts(U: Unfolded, cfg: PanelConfig, warnings: string[
     }
     parts.push(
       normalizePart(
-        { id: pid, group: 0, groupName: cfg.groupName, cut, holes: F.holes, score: F.score, engrave: F.engrave, perforations, meta: { faces: faces.length } },
+        { id: pid, group: cfg.group ?? 0, groupName: cfg.groupName, cut, holes: F.holes, score: F.score, engrave: F.engrave, perforations, meta: { faces: faces.length } },
         false, // keep the unfold orientation: it is the one checked against the sheet
       ),
     );

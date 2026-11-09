@@ -42,8 +42,12 @@ export function PipelineRail() {
       summary:
         p.joinery.kind === 'latches'
           ? `Latches · ${p.joinery.latch.kind}`
-          : p.joinery.kind === 'fingers' || p.joinery.kind === 'flaticulation'
-            ? JOIN_LABEL[p.joinery.kind]
+          : p.joinery.kind === 'lego'
+            ? `LEGO Technic · ${p.joinery.lego.element === 'axle' ? 'axles' : 'pins'}`
+            : p.joinery.kind === 'none' && (p.method === 'bricks' || p.method === 'sticks')
+              ? JOIN_LABEL.none
+              : ['fingers', 'flaticulation', 'junction', 'crossing', 'cardboard', 'bendtabs'].includes(p.joinery.kind)
+                ? JOIN_LABEL[p.joinery.kind]
             : `${JOIN_LABEL[p.joinery.kind]}${pinHoleDiameter(p.joinery) ? ` · Ø${u.fmt(pinHoleDiameter(p.joinery))}` : ''}`,
       state: 'ok',
     },

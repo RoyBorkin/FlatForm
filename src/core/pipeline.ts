@@ -23,7 +23,11 @@ import { buildLayers } from './sections/layers';
 import { buildClassic } from './sections/classic';
 import { buildMeshLines } from './frame/meshlines';
 import { buildTriangles } from './frame/triangles';
+import { buildSticks } from './frame/sticks';
+import { buildBricks } from './bricks/bricks';
+import { buildStack } from './stack/stack';
 import { applyManufacturing } from './manufacturing/manufacturing';
+import { applyJoinery } from './joinery/post';
 import { nestParts } from './nest/nest';
 import type { V3 } from './math/vec';
 
@@ -81,7 +85,7 @@ export function prepareSurface(base: MeshData, s: SurfaceParams, progress?: Prog
 }
 
 export function runMethod(surface: MeshData, p: ProjectParams, progress?: ProgressFn): MethodResult {
-  return applyManufacturing(buildMethod(surface, p, progress), p);
+  return applyManufacturing(applyJoinery(buildMethod(surface, p, progress), p), p);
 }
 
 function buildMethod(surface: MeshData, p: ProjectParams, progress?: ProgressFn): MethodResult {
@@ -93,7 +97,7 @@ function buildMethod(surface: MeshData, p: ProjectParams, progress?: ProgressFn)
     case 'slices':
       return buildSlices(surface, p.slices, p.joinery, p.material, on);
     case 'waffle':
-      return buildWaffle(surface, p.waffle, p.material, on);
+      return buildWaffle(surface, p.waffle, p.material, on, p.joinery);
     case 'folded':
       return buildFolded({ ...common, params: p.folded });
     case 'papercraft':
@@ -109,7 +113,13 @@ function buildMethod(surface: MeshData, p: ProjectParams, progress?: ProgressFn)
     case 'triangles':
       return buildTriangles({ ...common, params: p.triangles });
     case 'classic':
-      return buildClassic(surface, p.classic, p.material, on);
+      return buildClassic(surface, p.classic, p.material, on, p.joinery);
+    case 'sticks':
+      return buildSticks(surface, p.sticks, p.joinery, p.material, on);
+    case 'bricks':
+      return buildBricks(surface, p.bricks, on);
+    case 'stack':
+      return buildStack({ ...common, params: p.stack });
   }
 }
 

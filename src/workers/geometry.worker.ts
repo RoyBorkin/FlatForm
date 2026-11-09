@@ -11,6 +11,7 @@ import type { MeshData, MethodResult, NestResult } from '../core/types';
 import { buildBase, prepareSurface, runMethod, runNest, stageKeys } from '../core/pipeline';
 import { buildConnector, type ConnectorPart, type ConnectorSpec } from '../core/connectors/connectors';
 import { remesh } from '../core/mesh/remesh';
+import { buildKit, type KitPart, type KitRequest } from '../core/connectors/kit';
 import type { ManifoldToplevel } from 'manifold-3d';
 
 export interface ComputeResult {
@@ -109,6 +110,12 @@ const api = {
     const W = await getManifold();
     const d = data && data.hubs && Number.isFinite(limit) ? { ...data, hubs: data.hubs.slice(0, limit) } : data;
     return buildConnector(W, spec, d);
+  },
+
+  /** Junction hubs, crossing clips, cardboard connectors and LEGO-compatible bricks. */
+  async kit(req: KitRequest, limit = Infinity): Promise<KitPart[]> {
+    const W = await getManifold();
+    return buildKit(W, req, limit);
   },
 
   remesh(mesh: MeshData, edge: number, iterations = 3): MeshData {

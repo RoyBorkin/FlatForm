@@ -4,10 +4,11 @@ import type { MeshData, MethodResult, Part2D, Path2, Polyline2 } from '../types'
 import type { JoineryParams, MaterialParams, SlicesParams } from '../params';
 import { axisFrame, projectRange, slicePlane } from '../mesh/slice';
 import { sectionRegion, planeMatrix } from './section';
-import { clipOpenPaths, intersection, interiorPoint, offsetPolygons, splitIslands, pointInRegion } from '../polygon/polygon';
+import { clipOpenPaths, difference, interiorPoint, intersection, offsetPolygons, pointInRegion, splitIslands, union } from '../polygon/polygon';
 import { textPolylines, textWidth } from '../text/hershey';
 import { normalizePart, partId } from '../parts';
 import { pinHoleDiameter } from '../joinery/holes';
+import { stackTabs } from '../joinery/bendTabs';
 import type { V2 } from '../math/vec';
 
 export function buildSlices(
@@ -34,8 +35,28 @@ export function buildSlices(
     if (i % 10 === 0) onProgress?.((0.6 * i) / count, 'Slicing');
   }
 
+  // Bend tabs: each slice hooks into its neighbour; no dowels needed.
+  const scores: Polyline2[][] = sections.map(() => []);
+  let tabs = 0;
+  if (joinery.kind === 'bendtabs') {
+    const res = stackTabs(
+      sections.map((x) => x.region),
+      t,
+      pitch - t,
+      joinery.bendtabs,
+    );
+    res.features.forEach((F, k) => {
+      if (F.add.length) sections[k].region = union([...sections[k].region, ...F.add]);
+      if (F.sub.length) sections[k].region = difference(sections[k].region, F.sub);
+      scores[k].push(...F.score);
+    });
+    tabs = res.count;
+    if (pitch - t > t * 8) warnings.push('The gap between slices is wide for bend tabs; they work best on touching or nearly touching slices.');
+    if (!tabs) warnings.push('No slice pair had room for a bend tab. Use dowels instead, or narrower tabs.');
+  }
+
   // Alignment dowels: points inside every slice.
-  const holeD = pinHoleDiameter(joinery);
+  const holeD = joinery.kind === 'bendtabs' ? 0 : pinHoleDiameter(joinery);
   const holes: { x: number; y: number }[] = [];
   if (P.alignmentHoles > 0 && holeD > 0) {
     let common: Path2[] | null = null;
@@ -107,7 +128,7 @@ export function buildSlices(
           groupName: 'Slices',
           cut: island,
           holes: myHoles,
-          score: [],
+          score: scores[i].filter((l) => pointInRegion(l.pts[0], offsetPolygons(island, 0.5))),
           engrave,
           planar: { matrix: planeMatrix(f, s.d - t / 2) },
           meta: { slice: i + 1, position: Math.round(s.d * 10) / 10 },
@@ -120,8 +141,12 @@ export function buildSlices(
     parts,
     assembly: { kind: 'planar', thickness: t },
     overlays: {},
-    stats: { slices: sections.length, pitch, dowels: holes.length },
+    stats: { slices: sections.length, pitch, dowels: holes.length, tabs },
     warnings,
-    connectorData: { pinCount: holes.length, gripLength: (sections.length - 1) * pitch + t },
+    connectorData: {
+      pinCount: holes.length,
+      gripLength: (sections.length - 1) * pitch + t,
+      collars: joinery.kind === 'crossing' && holes.length ? { bore: holeD, count: parts.reduce((n, q) => n + q.holes.length, 0) * 2 } : undefined,
+    },
   };
 }

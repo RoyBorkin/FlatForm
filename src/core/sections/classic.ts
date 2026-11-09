@@ -6,7 +6,8 @@
  *  - curve: ribs standing square to a guide curve, threaded on a spine.
  */
 import type { MeshData, MethodResult, Part2D, Path2 } from '../types';
-import type { ClassicParams, MaterialParams } from '../params';
+import type { ClassicParams, JoineryParams, MaterialParams } from '../params';
+import { AngleCounter } from '../joinery/seams';
 import { bbox } from '../mesh/mesh';
 import { projectRange } from '../mesh/slice';
 import { circlePath, difference, intersection, offsetPolygons } from '../polygon/polygon';
@@ -31,13 +32,20 @@ function evenly(lo: number, hi: number, inset: number, count: number): number[] 
 
 const BIG = 1e5;
 
-export function buildClassic(surface: MeshData, P: ClassicParams, material: MaterialParams, onProgress?: (f: number, s: string) => void): MethodResult {
+export function buildClassic(surface: MeshData, P: ClassicParams, material: MaterialParams, onProgress?: (f: number, s: string) => void, J?: JoineryParams): MethodResult {
   const warnings: string[] = [];
   const t = material.thickness;
   const slotW = t + P.slotClearance;
   const band = Math.max(P.frame, t * 2);
   const families: { name: string; sections: Section[]; hollow: boolean }[] = [];
   let joints = 0;
+  const clipAngles = new AngleCounter(2);
+  /** Interlock two sections and count a crossing clip for each end of every joint. */
+  const join = (a: Section, b: Section, prefer: 0 | 1 | -1) => {
+    const n = interlock(a, b, slotW, P.slotLeadIn, tx, prefer);
+    if (n) clipAngles.add((Math.acos(Math.min(1, Math.abs(dot3(a.frame.n, b.frame.n)))) * 180) / Math.PI, n * 2);
+    return n;
+  };
   const tx = P.labelParts ? P.textHeight : 0;
 
   if (P.style === 'grid') {
@@ -55,7 +63,7 @@ export function buildClassic(surface: MeshData, P: ClassicParams, material: Mate
     onProgress?.(0.3, 'Ribs');
     const B = fam(nB, g.countB, 'B', 1);
     onProgress?.(0.5, 'Slots');
-    for (const a of A) for (const b of B) joints += interlock(a, b, slotW, P.slotLeadIn, tx, 1);
+    for (const a of A) for (const b of B) joints += join(a, b, 1);
     families.push({ name: 'Ribs A', sections: A, hollow: P.hollow }, { name: 'Ribs B', sections: B, hollow: P.hollow });
   } else if (P.style === 'revolve') {
     const r = P.revolve;
@@ -88,7 +96,7 @@ export function buildClassic(surface: MeshData, P: ClassicParams, material: Mate
       return s;
     });
     onProgress?.(0.5, 'Slots');
-    for (const fin of fins) for (const ring of rings) joints += interlock(fin, ring, slotW, P.slotLeadIn, tx, -1); // profiles slide in from outside
+    for (const fin of fins) for (const ring of rings) joints += join(fin, ring, -1); // profiles slide in from outside
     families.push({ name: 'Profiles', sections: fins, hollow: P.hollow }, { name: 'Rings', sections: rings, hollow: false });
   } else {
     const cv = P.curve;
@@ -117,7 +125,7 @@ export function buildClassic(surface: MeshData, P: ClassicParams, material: Mate
       return s;
     });
     onProgress?.(0.5, 'Slots');
-    for (const rib of ribs) for (const sp of spines) joints += interlock(rib, sp, slotW, P.slotLeadIn, tx, 1);
+    for (const rib of ribs) for (const sp of spines) joints += join(rib, sp, 1);
     families.push({ name: 'Ribs', sections: ribs, hollow: P.hollow }, { name: 'Spine', sections: spines, hollow: P.hollow });
   }
 
@@ -144,6 +152,6 @@ export function buildClassic(surface: MeshData, P: ClassicParams, material: Mate
     overlays: P.style === 'curve' ? { guide: guideSegments(curvePolyline(surface, P.curve.curve, 120)) } : {},
     stats: { sections: families.reduce((n, f) => n + f.sections.length, 0), joints },
     warnings,
-    connectorData: { pinCount: 0, gripLength: t, crossings: joints },
+    connectorData: { pinCount: 0, gripLength: t, crossings: joints, crossClips: J?.kind === 'crossing' && clipAngles.total ? clipAngles.list() : undefined },
   };
 }

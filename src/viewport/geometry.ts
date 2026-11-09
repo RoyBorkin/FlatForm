@@ -17,6 +17,7 @@ import {
   Path,
   Quaternion,
   Shape,
+  SphereGeometry,
   Vector2,
   Vector3,
   Color,
@@ -24,6 +25,7 @@ import {
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type { MeshData, MethodResult, Part2D, Strip3D } from '@/core/types';
 import { signedArea } from '@/core/polygon/polygon';
+import { LEGO_COLORS } from '@/core/presets';
 
 export function meshDataToGeometry(m: MeshData): BufferGeometry {
   const g = new BufferGeometry();
@@ -184,7 +186,89 @@ export function bakeAssembly(method: MethodResult, colors: string[]): Group {
     mesh.name = 'panels';
     group.add(mesh);
   }
+  const bake = (name: string, proto: BufferGeometry, ms: Matrix4[], color: string) => {
+    if (!ms.length) return;
+    const merged = mergeGeometries(ms.map((m) => proto.clone().applyMatrix4(m).toNonIndexed()), false);
+    if (!merged) return;
+    const mesh = new Mesh(merged, mat(color));
+    mesh.name = name;
+    group.add(mesh);
+  };
+  if (A.rods) bake('sticks', A.rods.profile === 'square' ? new BoxGeometry(1, 1, 1) : unitRod(), rodMatrices(A.rods), '#c8a26b');
+  if (A.hubs) bake('junction-hubs', unitSphere(), hubMatrices(A.hubs), '#faaf40');
+  if (A.bricks) {
+    const B = brickMatrices(method);
+    const byColor = new Map<string, { boxes: Matrix4[]; studs: Matrix4[] }>();
+    B.boxes.forEach((m, i) => {
+      const e = byColor.get(B.boxColors[i]) ?? { boxes: [], studs: [] };
+      e.boxes.push(m);
+      byColor.set(B.boxColors[i], e);
+    });
+    B.studs.forEach((m, i) => byColor.get(B.studColors[i])?.studs.push(m));
+    for (const [c, e] of byColor) {
+      bake(`bricks-${c.slice(1)}`, new BoxGeometry(1, 1, 1), e.boxes, c);
+      bake(`studs-${c.slice(1)}`, studGeometry(), e.studs, c);
+    }
+  }
   return group;
+}
+
+export const unitSphere = () => new SphereGeometry(1, 16, 12);
+export const unitRod = () => new CylinderGeometry(1, 1, 1, 14, 1);
+/** Stud: Ø4.8 × 1.7 with its base at y = 0 (axis on y, like all cylinders). */
+export const studGeometry = () => new CylinderGeometry(2.4, 2.4, 1.7, 16, 1).translate(0, 0.85, 0);
+
+const Y = new Vector3(0, 1, 0);
+
+/** Sticks: one matrix per rod for a unit cylinder or box on the y axis. */
+export function rodMatrices(rods: NonNullable<MethodResult['assembly']['rods']>): Matrix4[] {
+  const out: Matrix4[] = [];
+  const d = rods.data;
+  const a = new Vector3(), b = new Vector3(), dir = new Vector3(), q = new Quaternion();
+  const r = rods.profile === 'square' ? rods.size : rods.size / 2;
+  for (let i = 0; i + 5 < d.length; i += 6) {
+    a.set(d[i], d[i + 1], d[i + 2]);
+    b.set(d[i + 3], d[i + 4], d[i + 5]);
+    dir.subVectors(b, a);
+    const len = dir.length();
+    if (len < 1e-6) continue;
+    q.setFromUnitVectors(Y, dir.clone().normalize());
+    out.push(new Matrix4().compose(a.clone().add(b).multiplyScalar(0.5), q.clone(), new Vector3(r, len, r)));
+  }
+  return out;
+}
+
+/** Junction hubs: centre + radius (4 floats) each → sphere matrices. */
+export function hubMatrices(hubs: Float32Array): Matrix4[] {
+  const out: Matrix4[] = [];
+  for (let i = 0; i + 3 < hubs.length; i += 4) out.push(new Matrix4().compose(new Vector3(hubs[i], hubs[i + 1], hubs[i + 2]), new Quaternion(), new Vector3(hubs[i + 3], hubs[i + 3], hubs[i + 3])));
+  return out;
+}
+
+/** LEGO build: a box per brick and a stud on every cell not covered by the layer above. */
+export function brickMatrices(method: MethodResult) {
+  const list = method.kit?.bricks ?? [];
+  const g = method.assembly.bricks;
+  const boxes: Matrix4[] = [], boxColors: string[] = [], studs: Matrix4[] = [], studColors: string[] = [];
+  if (!g || !list.length) return { boxes, boxColors, studs, studColors };
+  const P = 8, H = g.unit, [x0, y0, z0] = g.origin;
+  const hex = new Map(LEGO_COLORS.map((c) => [c.code, c.hex]));
+  const key = (i: number, j: number, k: number) => `${i},${j},${k}`;
+  const filled = new Set<string>();
+  for (const b of list) for (let i = 0; i < b.w; i++) for (let j = 0; j < b.d; j++) filled.add(key(b.x + i, b.y + j, b.z));
+  const up = new Quaternion().setFromUnitVectors(Y, new Vector3(0, 0, 1));
+  for (const b of list) {
+    const c = hex.get(b.color) ?? '#c91a09';
+    boxes.push(new Matrix4().compose(new Vector3(x0 + (b.x + b.w / 2) * P, y0 + (b.y + b.d / 2) * P, z0 + (b.z + 0.5) * H), new Quaternion(), new Vector3(b.w * P - 0.2, b.d * P - 0.2, H - 0.04)));
+    boxColors.push(c);
+    for (let i = 0; i < b.w; i++)
+      for (let j = 0; j < b.d; j++) {
+        if (filled.has(key(b.x + i, b.y + j, b.z + 1))) continue;
+        studs.push(new Matrix4().compose(new Vector3(x0 + (b.x + i + 0.5) * P, y0 + (b.y + j + 0.5) * P, z0 + (b.z + 1) * H), up, new Vector3(1, 1, 1)));
+        studColors.push(c);
+      }
+  }
+  return { boxes, boxColors, studs, studColors };
 }
 
 /** Unit-height prism (z from 0 to 1) in the spacer's cross-section, bored for the rod. */

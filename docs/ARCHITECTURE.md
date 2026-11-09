@@ -9,7 +9,7 @@ The whole app is driven by a single plain-JSON object, `ProjectParams` (`src/cor
 ProjectParams ──► worker.compute(params, knownKeys, until)
                     ├─ base     buildBase(shape)              skeleton / primitive / mesh asset
                     ├─ surface  prepareSurface(base)          transform → cut → remesh → relax
-                    ├─ method   runMethod(surface)            one of 11 methods, then applyManufacturing
+                    ├─ method   runMethod(surface)            one of 14 methods, then applyJoinery and applyManufacturing
                     └─ nest     nestParts(method.parts)       on the sheet, or the print bed
 ```
 
@@ -31,6 +31,8 @@ For each tree edge we keep the 3D polyline the strip follows and a normal at eve
 ### Unfold engine (`unfold/`)
 
 Folded panels, paper-craft, minimal joinery and flex hinges share one engine. `unfold()` lays triangles out along a spanning tree of the dual graph (flattest folds, longest edges or breadth first), refusing any face that would overlap its island (separating-axis test on a spatial hash) or outgrow the sheet. Optional *charts* restrict islands to groups of faces. `buildPanelParts()` unions each island's triangles and lets the method decorate every fold and every side of every seam through **edge features** (`joinery/edgeFeatures.ts`): glue flaps, latches, hole rows, lacing, finger joints, fold lines, living-hinge bands and Flaticulation patterns. Each feature draws in an edge-local frame (`s` along the edge from its lower-numbered vertex, `n` out of the panel), so both sides of a seam line up exactly.
+
+**Junctions, kits and stacks (1.1).** Wherever parts meet at a point, `joinery/junction.ts` builds a `Junction`: the node position, a local frame with z on the surface normal, and one arm per member (`round`, `square` or `slot` sockets for sticks and bars, a `fork` for a panel corner). The core radius is the largest r / sin(α/2) over neighbouring arms, so sockets never overlap; members are shortened by the core (sticks, bars) or their corners cut back (panels, via `PanelConfig.vertexRelief`). Hubs are grouped by a signature of sorted arm specs and pairwise angles rounded to 1°, so identical hubs print from one file. `joinery/post.ts` (`applyJoinery`) runs after every method to turn lattice hubs into junctions and LEGO pin holes into axle holes. Seam-based kinds (cardboard connectors, LEGO Technic rows, bend tabs) are more edge features; cardboard and crossing clips are counted per angle with `AngleCounter`. `connectors/kit.ts` turns all of these, and LEGO-compatible bricks, into Manifold solids in print orientation. `bricks/` voxelises the shape on the 8 mm stud grid by slicing each layer, hollows it with a 3D distance transform and packs bricks greedily, largest first, turning direction every layer. `stack/` builds the four stacked modes: relief silhouettes (triangles clipped to a depth plane and unioned in projection), solid sections, laminated skins (offset surfaces flattened with a different chart seed per layer, so seams never line up) and nested shells (offset copies unfolded like folded panels).
 
 For flexible sheet, `flatten.ts` replaces the tree layout of each disc-shaped chart with a **least-squares conformal map** (complex LSCM rows, solved by conjugate gradients on the normal equations), scaled to the true area. Charts that are not discs are first split into connected parts and then halved along their long axis (`splitToDiscs`). A chart that flips, overlaps itself or outgrows the sheet keeps the exact tree layout.
 

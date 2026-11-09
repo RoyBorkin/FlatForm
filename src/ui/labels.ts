@@ -21,6 +21,9 @@ export const METHODS: MethodInfo[] = [
   { id: 'papercraft', title: 'Paper-craft', text: 'Pepakura-style pieces with glue flaps and numbered edges.', family: 'Folded' },
   { id: 'minimal', title: 'Minimal joinery', text: 'A few large pieces of felt, fabric or plastic, laced together.', family: 'Folded' },
   { id: 'flexhinge', title: 'Flex hinges', text: 'Few rigid pieces that bend on laser-cut living hinges.', family: 'Folded' },
+  { id: 'stack', title: 'Stacked layers', text: 'Layers on top of each other: laminated skins, nested shells, a layered relief or a solid stack.', family: 'Sections' },
+  { id: 'sticks', title: 'Sticks', text: 'Dowels, toothpicks, profiles or cut strips, meeting in printed junction hubs.', family: 'Frames' },
+  { id: 'bricks', title: 'LEGO bricks', text: 'Rebuilt from real LEGO bricks or plates, with a brick list and build steps.', family: 'Frames' },
 ];
 
 export const METHOD_NAME = Object.fromEntries(METHODS.map((m) => [m.id, m.title])) as Record<MethodKind, string>;
@@ -33,6 +36,11 @@ export const JOIN_LABEL: Record<JoineryKind, string> = {
   wire: 'Wire & lacing',
   fingers: 'Finger joints',
   flaticulation: 'Flaticulation',
+  junction: 'Junction hubs',
+  crossing: 'Crossing clips',
+  cardboard: 'Cardboard connectors',
+  lego: 'LEGO Technic',
+  bendtabs: 'Bend tabs',
 };
 
 export const JOIN_TEXT: Record<JoineryKind, string> = {
@@ -43,6 +51,11 @@ export const JOIN_TEXT: Record<JoineryKind, string> = {
   wire: 'Holes or slots for wire, string, fabric strip, rubber bands or zip ties.',
   fingers: 'Box joints along every seam. Unique patterns make them fool-proof.',
   flaticulation: 'Cut-in-place hinges that snap to the fold angle (UIST ’22).',
+  junction: 'A printed hub at every junction, with a socket at each member’s real angle.',
+  crossing: 'Printed clips shaped for each crossing angle, or collars where rods pass through.',
+  cardboard: 'Printed channels that grip two sheet edges at their angle. Great for cardboard.',
+  lego: 'Real LEGO Technic pins or axles through holes on the 8 mm grid.',
+  bendtabs: 'Tabs that pass through a slot in the next layer or panel and are bent over.',
 };
 
 export const PROCESS_LABEL: Record<Process, string> = { laser: 'Laser cut', print3d: '3D print', cnc: 'CNC' };

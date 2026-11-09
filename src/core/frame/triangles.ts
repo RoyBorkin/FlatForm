@@ -6,15 +6,16 @@
  * is close to its class length, and each face is then cut as the ideal
  * triangle of its three classes, so identical panels can be batch-cut.
  */
-import type { MeshData, MethodResult, Part2D, Path2 } from '../types';
+import type { Junction, JunctionArm, MeshData, MethodResult, Part2D, Path2 } from '../types';
 import type { JoineryParams, MaterialParams, TrianglesParams } from '../params';
 import { remesh, edgeLengthForTriangles } from '../mesh/remesh';
 import { buildTopology, triNormal } from '../mesh/mesh';
 import { MeshProjector } from '../mesh/project';
 import { basisMatrix, cross3, dot3, getV, norm3, sub3, type V2, type V3 } from '../math/vec';
-import { difference, offsetPolygons, regionArea, union, interiorPoint, pointInRegion } from '../polygon/polygon';
+import { circlePath, difference, interiorPoint, offsetPolygons, pointInRegion, regionArea, union } from '../polygon/polygon';
 import { emptyFeatures, type EdgeCtx } from '../joinery/edgeFeatures';
-import { seamFeature, seamLabelInset } from '../joinery/seams';
+import { AngleCounter, seamFeature, seamLabelInset } from '../joinery/seams';
+import { makeJunction } from '../joinery/junction';
 import { textPolylines, textWidth } from '../text/hershey';
 import { normalizePart, partId } from '../parts';
 
@@ -143,7 +144,32 @@ export function buildTriangles(input: {
   const normals: V3[] = Array.from({ length: nt }, (_, f) => triNormal(m, f));
   const types = new Map<string, { name: string; count: number }>();
   const holeLabel = seamLabelInset(J, t);
-  const seam = seamFeature(J, { glueTabWidth: 0 });
+  const clips = new AngleCounter(5); // a cardboard channel takes a few degrees either way
+  const seam = seamFeature(J, { glueTabWidth: 0, onClip: (_c, n, a) => clips.add(a, n) });
+  // Junction hubs at every vertex grip the corners of the panels around it.
+  const junctions: Junction[] = [];
+  const relief = new Float64Array(m.positions.length / 3);
+  if (J.kind === 'junction') {
+    const around: number[][] = Array.from({ length: m.positions.length / 3 }, () => []);
+    for (let f = 0; f < nt; f++) for (let k = 0; k < 3; k++) around[m.indices[f * 3 + k]].push(f);
+    const forkW = Math.max(8, J.junction.socketDepth * 0.8);
+    around.forEach((faces, v) => {
+      if (faces.length < 2) return;
+      const p = getV(m.positions, v);
+      let nrm: V3 = [0, 0, 0];
+      const arms: JunctionArm[] = faces.map((f) => {
+        const ids = [0, 1, 2].map((k) => m.indices[f * 3 + k]);
+        const k = ids.indexOf(v);
+        const a = norm3(sub3(getV(m.positions, ids[(k + 1) % 3]), p)), b = norm3(sub3(getV(m.positions, ids[(k + 2) % 3]), p));
+        const up = normals[f];
+        nrm = [nrm[0] + up[0], nrm[1] + up[1], nrm[2] + up[2]];
+        return { dir: norm3([a[0] + b[0], a[1] + b[1], a[2] + b[2]]), up, shape: 'fork', w: forkW, h: t };
+      });
+      const h = makeJunction(`V${v + 1}`, p, nrm, arms, J.junction);
+      junctions.push(h);
+      relief[v] = h.core + J.junction.clearance;
+    });
+  }
   const parts: Part2D[] = [];
   const seamNo = new Int32Array(nE);
   let seams = 0;
@@ -206,6 +232,11 @@ export function buildTriangles(input: {
       }
     }
     let region: Path2[] = offsetPolygons([trimCorners(region0, P.cornerTrim)], -P.gap / 2, 'miter');
+    if (J.kind === 'junction') {
+      // Cut each corner back so the hub's fork can grip it.
+      const cuts = [0, 1, 2].filter((k) => relief[vi[k]] > 0).map((k) => circlePath(tri[k][0], tri[k][1], relief[vi[k]], 32));
+      if (cuts.length) region = difference(region, cuts);
+    }
     if (F.add.length) region = union([...region, ...F.add]);
     if (F.sub.length) region = difference(region, F.sub);
     if (P.style === 'frame') {
@@ -246,10 +277,15 @@ export function buildTriangles(input: {
   input.onProgress?.(0.95, 'Panels');
   return {
     parts,
-    assembly: { kind: 'planar', thickness: t },
+    assembly: { kind: 'planar', thickness: t, hubs: junctions.length ? new Float32Array(junctions.flatMap((h) => [...h.pos, h.core + J.junction.wall])) : undefined },
     overlays: {},
     stats: { faces: nt, types: types.size, lengthClasses: centres.length, worstError: Math.round(worst * 1000) / 10, meanError: Math.round(mean * 1000) / 10 },
     warnings,
-    connectorData: { pinCount: parts.reduce((n, p) => n + p.holes.length, 0) / 2, gripLength: t * 2 },
+    connectorData: {
+      pinCount: J.kind === 'junction' ? junctions.length : parts.reduce((n, p) => n + p.holes.length, 0) / 2,
+      gripLength: t * 2,
+      junctions: junctions.length ? junctions : undefined,
+      seamClips: clips.total ? clips.list() : undefined,
+    },
   };
 }

@@ -103,6 +103,39 @@ export function MethodGlyph({ kind }: { kind: MethodKind }) {
           <path d="M32 4 L32 36" stroke={a} strokeWidth="1.4" />
         </g>
       )}
+      {kind === 'sticks' && (
+        <g strokeLinecap="round">
+          {[
+            [10, 32, 24, 10], [24, 10, 40, 30], [10, 32, 40, 30], [40, 30, 54, 8], [24, 10, 54, 8],
+          ].map(([x1, y1, x2, y2], i) => (
+            <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={i % 2 ? b : a} strokeWidth="2.4" />
+          ))}
+          {[[10, 32], [24, 10], [40, 30], [54, 8]].map(([x, y]) => (
+            <circle key={`${x}${y}`} cx={x} cy={y} r="4" fill="var(--panel)" stroke="var(--text)" strokeWidth="1.6" />
+          ))}
+        </g>
+      )}
+      {kind === 'bricks' && (
+        <g strokeWidth="1.4" strokeLinejoin="round">
+          {[
+            [8, 26, 24, a], [32, 26, 24, b], [20, 16, 24, b], [44, 16, 12, a], [14, 6, 36, a],
+          ].map(([x, y, w, c], i) => (
+            <g key={i}>
+              <rect x={x as number} y={y as number} width={w as number} height="9" rx="1" fill={c as string} fillOpacity="0.25" stroke={c as string} />
+              {Array.from({ length: Math.round((w as number) / 6) }, (_, k) => (
+                <rect key={k} x={(x as number) + 1.5 + k * 6} y={(y as number) - 2.4} width="3" height="2.4" fill={c as string} />
+              ))}
+            </g>
+          ))}
+        </g>
+      )}
+      {kind === 'stack' && (
+        <g strokeWidth="1.8" strokeLinejoin="round" fill="none">
+          {[0, 1, 2, 3].map((i) => (
+            <path key={i} d={`M${10 + i * 5} ${32 - i * 6} Q32 ${24 - i * 9} ${54 - i * 5} ${32 - i * 6} Z`} stroke={i % 2 ? b : a} fill={i % 2 ? b : a} fillOpacity="0.12" />
+          ))}
+        </g>
+      )}
     </svg>
   );
 }

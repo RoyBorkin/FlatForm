@@ -28,7 +28,7 @@ A 3D-printer slicer takes a model and turns it into layers and toolpaths that on
 
 Where a 3D-print slicer has layer height, infill and supports, FlatForm has the **construction method** (how the model is broken into flat parts: slices, waffles, unfolded panels, strips, bars, triangles…), the **joinery** (how the parts hold together) and the **making** settings (laser, CNC or 3D print). Every step has its own controls, and the result is the cut file, the flat parts, the assembled 3D model, a parts list, an assembly guide and any printed connectors.
 
-It started from the "organic shape to fabrication" workflow, usually built as a large Grasshopper definition (SubD → Kangaroo → clusters → Kruskal maze → strips → pinned layers → unroll → nest), and makes it a standalone tool with **eleven construction methods**, **seven kinds of joinery** and three ways of making the parts.
+It started from the "organic shape to fabrication" workflow, usually built as a large Grasshopper definition (SubD → Kangaroo → clusters → Kruskal maze → strips → pinned layers → unroll → nest), and makes it a standalone tool with **fourteen construction methods**, **twelve kinds of joinery** and three ways of making the parts.
 
 ## Features
 
@@ -43,16 +43,19 @@ It started from the "organic shape to fabrication" workflow, usually built as a 
 - **Isotropic remeshing** to a target triangle count (split, collapse, flip, tangential relax, project).
 - **Relax**: *minimal surface* (soap film between the open rims, like Kangaroo) or *smooth* (Taubin, no shrinking).
 
-**Eleven construction methods**, in four families
+**Fourteen construction methods**, in four families
 
 | Family | Method | What you get |
 |---|---|---|
 | Surface | **Branching lattice** | The surface is split into clusters and a maze grows inside each one; each maze is one strip part. Two or more layers with different clusters are pinned together through a numbered hole at every node. |
 | Frames | **Mesh lines** | Every edge of the mesh becomes a flat bar, standing on edge (the matchstick-frame look) or lying flat. Bars are rounded to a length step so equal ones can be batch-cut; node hubs can be printed with arms at the real angles. |
 | Frames | **Triangles** | The surface is rebuilt from a few repeated triangle shapes: edge lengths are clustered into classes, the mesh is relaxed toward them (position-based springs projected to the surface), and each face is cut as the ideal triangle of its classes. Solid panels or open frames, with gap and corner trim. |
+| Frames | **Sticks** | Every edge becomes a stick: toothpicks, bamboo skewers, wood dowels, carbon or aluminium tubes, square profiles, or **laser-cut flat strips**. Sticks are rounded to a length step, lettered A, B, … and packed into stock lengths for a cut list; each node gets a printed **junction hub** with a socket at every stick's real angle, and identical hubs share one file. |
+| Frames | **LEGO bricks** | The shape is rebuilt from real LEGO bricks or plates on the 8 mm stud grid: solid or hollow with a set wall, staggered joints, the brick sizes you own, and colour by one colour, layers or height bands. You get a brick list with LDraw/BrickLink part numbers, an **LDraw model** (one step per layer), layer-by-layer instructions and printable LEGO-compatible bricks. |
 | Sections | **Stacked slices** | Contour slices along X, Y or Z, solid or hollow, on dowels, with the next slice engraved on each one. |
 | Sections | **Layers** | Spaced layers in **any direction** (azimuth / tilt) or fanned **along a curve** you draw. Rods run through the longest run of layers they can; **3D-printed spacers** (round, square, hex or star, any size) hold the gaps, grouped by length. Hollow layers keep a hub and spokes around every rod. |
 | Sections | **Interlocking waffle** | Two families of ribs with half-slots, fit clearance and lead-in chamfers, each slot labelled with its mating rib. |
+| Sections | **Stacked layers** | Shapes stacked one on top of another, in four modes: **layered relief** (silhouettes from any view direction, like a topographic model), **solid stack** (touching sections through the whole shape), **laminated skins** (several surface skins glued and pinned over one another) and **nested shells** (offset copies of the shell, one inside the next). Held by bend tabs, rods, pins or any seam joinery. |
 | Sections | **Classic slot model** | The classic laser-cut model in three styles: **grid** (two rib families in any plane, rotatable), **revolve** (profiles fanned around the axis, sliding into open rings) and **along a curve** (ribs square to a spine curve, on one to three spines). Slots open the same way for every pair, so parts slide together. |
 | Folded | **Folded panels** | A faceted unfold; folds scored, perforated or cut as Flaticulation joints; cut edges numbered and joined. |
 | Folded | **Paper-craft** | Pepakura-style pieces with glue flaps (alternate, one side, both or none; trapezoid, rounded or triangle), mountain/valley fold lines, edge numbers and piece names. |
@@ -66,6 +69,11 @@ It started from the "organic shape to fabrication" workflow, usually built as a 
 - **Folding latches**: tab & slot, arrowhead, hook and dovetail, fully parametric.
 - **Wire & lacing**: holes or slots for metal wire, string, fabric strip, rubber bands or zip ties; running, cross, whip or notch stitch; hole size, slot length, pitch and edge distance.
 - **Finger joints**: box joints along every seam, with depth corrected for the real angle between the parts. *Unique* and *symmetric* patterns code each seam so only the right parts fit (after FoolProofJoint, CHI ’22).
+- **Junction hubs**: a printed hub wherever parts meet at a point, with a round, square or slot socket (sticks, bars, strips) or a fork (panel corners, which are cut back to fit) at each member's real angle. Works with sticks, mesh lines, lattice nodes, triangles, folded panels, flex hinges and shells.
+- **Crossing clips**: printed caps for each end of a slotted crossing (waffle, classic), shaped for that crossing's angle, or **collars** that grip the rod on both sides of every layer (slices, layers, stacks).
+- **Cardboard connectors**: printed U-channels that grip two sheet edges at the seam's angle, one file per angle; panels stop short of the seam and engraved marks show where each connector goes. After the open-source cardboard connector systems on Printables and MakerWorld.
+- **LEGO Technic**: Ø4.8 mm pin holes (or cross-shaped axle holes) on the 8 mm stud pitch, so parts join with real Technic pins and axles.
+- **Bend tabs**: tabs that pass through a slot in the next layer or panel and are bent over, with fold-under length, bend radius and score lines. For any sheet in all layer methods and along folded seams; the app warns on brittle materials.
 - **Flaticulation**: folds are cut right through and T-patterns along them clutch the two sides at their exact angle (Zheng et al., UIST ’22). Articulated or detent joints; neck and head width, edge coverage, stiffness, breakaway bridges, and kerf calibration (K, α) from the paper's Table A.1.
 
 Every joinery panel shows a live preview drawn by the same code that cuts the parts.
@@ -89,6 +97,9 @@ Every joinery panel shows a live preview drawn by the same code that cuts the pa
 - **Assembly guide** PDF: a cover render, the steps for the chosen method, every sheet with part labels, and a page entry for every part with its outline, pin numbers and a render showing where it goes.
 - **Parts list & stats** as CSV or JSON: sizes, cut length, sheet positions, estimated cut time and cost.
 - **Printable connectors and layer spacers** as a zip of STL files plus a print list.
+- **Printed kits**: junction hubs, crossing clips and collars, or cardboard connectors as one STL per distinct shape, with a print list saying how many of each and where they go.
+- **Stick cut list** (CSV): every length with its letter and count, and how many stock lengths to buy.
+- **LEGO build**: an **LDraw model** (`.ldr`, opens in BrickLink Studio, LeoCAD and LDView), **building instructions** PDF with a parts page and a plan of every layer, a **brick list** CSV for ordering, and **printable LEGO-compatible bricks** (STL per size).
 - **Print plates** (3D print) as STL or 3MF, one per bed.
 - Every file carries the author credit: DXF comments, SVG metadata, PDF properties and footer, 3MF metadata, STL header.
 - **Project file** (`.flatform`), and a single **export everything** zip.
@@ -105,6 +116,10 @@ Every joinery panel shows a live preview drawn by the same code that cuts the pa
 <p align="center">
   <img src="docs/screenshot-detail.jpg" alt="Paper-craft pieces with glue flaps nested on four sheets" width="49%" />
   <img src="docs/screenshot-method.jpg" alt="The table base rebuilt from a few repeated triangle shapes" width="49%" />
+</p>
+<p align="center">
+  <img src="docs/screenshot-sticks.jpg" alt="The table base as dowels meeting in printed junction hubs" width="49%" />
+  <img src="docs/screenshot-bricks.jpg" alt="The table base rebuilt from LEGO bricks, with the LDraw and instructions exports" width="49%" />
 </p>
 
 ## Quick start (web)
@@ -170,10 +185,13 @@ src/
     lattice/ slices/ waffle/ folded/   the first four methods
     unfold/             unfold engine, LSCM flattening, panel builder; paper-craft, minimal, flex hinges
     sections/           interlocking sections in any orientation, guide curves; layers, classic
-    frame/              mesh lines, triangles
-    joinery/            hole sizes, latches, edge features (flaps, lacing, fingers), Flaticulation
+    frame/              mesh lines, triangles, sticks
+    bricks/             LEGO voxel build and brick packing
+    stack/              stacked layers: relief, solid, laminated skins, nested shells
+    joinery/            hole sizes, latches, edge features (flaps, lacing, fingers), Flaticulation,
+                        junction hubs, bend tabs, cardboard and LEGO seams
     manufacturing/      CNC reliefs, print beds, weight and time estimates
-    connectors/         printed connectors (Manifold WASM)
+    connectors/         printed connectors and kits: hubs, clips, cardboard connectors, bricks (Manifold WASM)
     polygon/            Clipper wrapper: offsets, booleans, islands
     nest/               raster and MaxRects nesting
     text/               Hershey single-stroke font
@@ -215,6 +233,9 @@ Vite · React 19 · TypeScript · Three.js / React Three Fiber · Zustand + zund
 - Minimal joinery's flattening is conformal: angles are kept and areas may stretch a little, which suits felt and fabric but not paper. The app reports the worst stretch.
 - Triangles approach their class lengths but rarely hit them exactly; panels are cut to the ideal size and the app reports the average and worst error.
 - Flaticulation's kerf table was measured on 3 mm MDF; calibrate K and α for other boards.
+- Junction hubs are made for each node's real angles. With **Share identical hubs** on, hubs whose angles agree to 1° print from one file, but a free-form shape usually has few repeats.
+- The LEGO build checks that every brick is connected, but not that the model can stand under its own weight; hollow builds with thin walls can be fragile. Printable bricks fit real LEGO on a well-tuned printer; print a 2×2 first.
+- Bend tabs crack in brittle sheet (acrylic, MDF): use them with metal, card, polypropylene or thin plywood.
 
 ## Licence
 

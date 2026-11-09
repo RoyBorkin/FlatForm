@@ -98,6 +98,26 @@ const STEPS: Record<string, string[]> = {
     'Revolved models: stand the rings on their profiles, then slide each profile in from the outside. Curved models: thread the ribs onto the spine in order.',
     'Do not force a slot. If it is tight, increase the fit clearance and cut again.',
   ],
+  sticks: [
+    'Cut every stick to length from the cut list. Each length has a letter (A, B, …); mark the letter on both ends with a pencil or tape.',
+    'Print the junction hubs. Hubs that share a file are interchangeable; the others carry the number of the node they belong to.',
+    'Start at the bottom: push the sticks into the hubs of one ring of nodes, then build upward ring by ring so the frame always stands.',
+    'Sticks should go in until they bottom out in the socket. A drop of glue in each socket makes the frame permanent.',
+  ],
+  stack: [
+    'Cut every sheet. Layers are numbered from the back (or the bottom) of the stack.',
+    'Lay layer 1 flat, then place each next layer on top using its engraved outline, rods or registration holes to line it up.',
+    'Laminated skins: glue each skin onto the one below and pin it through the matching holes while the glue sets.',
+    'Nested shells: build the innermost shell first, then close each larger shell around it.',
+  ],
+};
+
+const JOIN_STEPS: Partial<Record<string, string>> = {
+  junction: 'Junction hubs: print the hubs from the connector export. Each hub sits where its parts meet; slide the cut-back corners or bar ends into its forks or sockets until they bottom out.',
+  crossing: 'Crossing clips: once two parts are slotted together, press a clip over each end of the crossing. On stacks, push a collar onto the rod on both sides of each layer.',
+  cardboard: 'Cardboard connectors: print the connectors (one file per angle). Push the connector onto one panel at its engraved mark, then push the neighbouring panel into the other channel.',
+  lego: 'LEGO Technic: join parts with Technic pins (2780) through the matching Ø4.8 mm holes, or run Technic axles with bushes through the cross-shaped holes.',
+  bendtabs: 'Bend tabs: push each tab through the slot in the next part, then fold it flat along its score lines. Bend once, gently; brittle sheet cracks if bent twice.',
 };
 
 function partGeometries(method: MethodResult): Map<string, BufferGeometry> {
@@ -299,7 +319,7 @@ export async function buildAssemblyGuide(onProgress?: (f: number) => void): Prom
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(11);
   let y = M + 18;
-  (STEPS[p.method] ?? []).forEach((s, i) => {
+  [...(STEPS[p.method] ?? []), ...(JOIN_STEPS[p.joinery.kind] ? [JOIN_STEPS[p.joinery.kind]!] : [])].forEach((s, i) => {
     const lines = doc.splitTextToSize(s, W - 2 * M - 12);
     doc.setFont('helvetica', 'bold');
     doc.text(String(i + 1), M, y);

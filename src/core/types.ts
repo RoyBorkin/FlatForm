@@ -88,6 +88,48 @@ export interface Pin3D {
   radius: number;
 }
 
+/** One member entering a printed junction hub. Directions are in the hub's own frame (z = surface normal). */
+export interface JunctionArm {
+  dir: V3;
+  /** Orients non-round sockets: the socket's height `h` runs along this. */
+  up: V3;
+  /** round / square / tube: stock; slot: closed channel for a strip; fork: open slot gripping a panel corner. */
+  shape: 'round' | 'square' | 'slot' | 'fork';
+  w: number;
+  h: number;
+}
+
+export interface Junction {
+  id: string;
+  /** World position (for the 3D preview). */
+  pos: V3;
+  /** Distance from the centre to the bottom of every socket (mm). */
+  core: number;
+  arms: JunctionArm[];
+}
+
+/** Bought items and non-sheet parts that a method produces (sticks, bricks). */
+export interface Kit {
+  /** Cut list: one row per stick length. */
+  sticks?: { label: string; length: number; count: number }[];
+  stickProfile?: string;
+  stickStock?: { length: number; pieces: number; waste: number };
+  /** LEGO build. */
+  bricks?: BrickPlacement[];
+  brickUnit?: 'brick' | 'plate';
+}
+
+export interface BrickPlacement {
+  /** Grid position of the brick's min corner, in studs, and layer index. */
+  x: number;
+  y: number;
+  z: number;
+  /** Footprint in studs along x and y. */
+  w: number;
+  d: number;
+  color: number;
+}
+
 export interface Assembly3D {
   kind: 'lattice' | 'planar' | 'panels';
   strips?: Strip3D[];
@@ -100,6 +142,12 @@ export interface Assembly3D {
   connectors?: Float32Array;
   /** Printed layer spacers: start xyz, end xyz per spacer (6 floats); size = outer width. */
   spacers?: { data: Float32Array; size: number; shape: 'round' | 'square' | 'hex' | 'star' };
+  /** Sticks: start xyz, end xyz (6 floats) each; profile and size. */
+  rods?: { data: Float32Array; profile: 'round' | 'square' | 'tube'; size: number };
+  /** Printed junction hubs: centre xyz + radius (4 floats) each. */
+  hubs?: Float32Array;
+  /** LEGO build: origin of the stud grid and the vertical unit. */
+  bricks?: { origin: V3; unit: number };
 }
 
 export interface MethodResult {
@@ -116,6 +164,8 @@ export interface MethodResult {
   stats: Record<string, number>;
   warnings: string[];
   /** What the printed connectors need to know about the build. */
+  /** Bought items and non-sheet parts (cut list, bricks). */
+  kit?: Kit;
   connectorData?: {
     /** Pins / dowels / screws: how many and how long the stack they pass through is. */
     pinCount: number;
@@ -133,6 +183,14 @@ export interface MethodResult {
     spacerBore?: number;
     /** Node hub channel cross-section when it is not a lattice strip stack. */
     hubChannel?: { width: number; height: number };
+    /** Junction hubs (joinery 'junction'). */
+    junctions?: Junction[];
+    /** Crossing clips grouped by the angle between the two parts (degrees). */
+    crossClips?: { angle: number; count: number }[];
+    /** Rod collars where a rod passes through a layer. */
+    collars?: { bore: number; count: number };
+    /** Cardboard channel connectors grouped by inside angle (degrees). */
+    seamClips?: { angle: number; count: number }[];
   };
 }
 
