@@ -12,6 +12,9 @@ import { bbox } from '../mesh/mesh';
 import { slicePlane, type PlaneFrame } from '../mesh/slice';
 import { sectionRegion } from '../slices/section';
 import type { Path2 } from '../types';
+import { LEGO_PARTS } from '../presets';
+import { rng } from '../math/rng';
+import { brickCells, cornerCells } from './catalog';
 
 export const STUD = 8;
 export const BRICK_H = 9.6;
@@ -85,8 +88,18 @@ export function buildBricks(surface: MeshData, P: BricksParams, onProgress?: (f:
   onProgress?.(0.5, 'Placing bricks');
 
   // Footprints, largest first; each tried in the layer's preferred direction first.
-  const sizes = (P.sizes.length ? P.sizes : ["1x1"]).map((s) => s.split("x").map(Number) as [number, number]).sort((p, q) => q[0] * q[1] - p[0] * p[1] || q[0] - p[0]);
-  if (!sizes.some(([a, c]) => a === 1 && c === 1)) sizes.push([1, 1]); // always able to fill a single stud
+  const unitOk = (sz: string) => P.unit === 'plate' || !!LEGO_PARTS[sz]?.brick;
+  type Shape = { kind: 'rect'; a: number; b: number } | { kind: 'corner' };
+  const shapes: Shape[] = (P.sizes.length ? P.sizes : ['1x1'])
+    .filter(unitOk)
+    .map((s) => s.split('x').map(Number) as [number, number])
+    .map(([a, c]) => ({ kind: 'rect' as const, a, b: c }));
+  if (!shapes.some((q) => q.kind === 'rect' && q.a === 1 && q.b === 1)) shapes.push({ kind: 'rect', a: 1, b: 1 }); // always able to fill a single stud
+  if (P.corners) shapes.push({ kind: 'corner' });
+  const area = (q: Shape) => (q.kind === 'corner' ? 3 : q.a * q.b);
+  // Corners go before the straight 3-stud and smaller pieces, so they actually get used.
+  shapes.sort((p, q) => area(q) - area(p) || (p.kind === 'corner' ? -1 : q.kind === 'corner' ? 1 : (q as { b: number }).b - (p as { b: number }).b));
+  const R = rng(P.seed * 7919 + 13);
   const bricks: BrickPlacement[] = [];
   const owner = new Int32Array(cells).fill(-1);
   const colorOf = (k: number) => {
@@ -95,37 +108,51 @@ export function buildBricks(surface: MeshData, P: BricksParams, onProgress?: (f:
     if (P.colorMode === 'layers') return pal[k % pal.length];
     return pal[Math.min(pal.length - 1, Math.floor((k / nz) * pal.length))];
   };
+  const free = (i: number, j: number, k: number) => i >= 0 && j >= 0 && i < nx && j < ny && occ[idx(i, j, k)] === 1 && owner[idx(i, j, k)] < 0;
   for (let k = 0; k < nz; k++) {
     const alongX = !P.stagger || k % 2 === 0;
     const order: [number, number][] = [];
     if (alongX) for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) order.push([i, j]);
     else for (let i = 0; i < nx; i++) for (let j = 0; j < ny; j++) order.push([i, j]);
     for (const [i, j] of order) {
-      const c = idx(i, j, k);
-      if (!occ[c] || owner[c] >= 0) continue;
-      let placed = false;
-      for (const [short, long] of sizes) {
-        const options: [number, number][] = alongX ? [[long, short], [short, long]] : [[short, long], [long, short]];
-        for (const [w, d] of options) {
-          if (i + w > nx || j + d > ny) continue;
-          let ok = true;
-          for (let dj = 0; dj < d && ok; dj++)
-            for (let di = 0; di < w; di++) {
-              const cc = idx(i + di, j + dj, k);
-              if (!occ[cc] || owner[cc] >= 0) {
-                ok = false;
+      if (!free(i, j, k)) continue;
+      // Every placement of every piece that covers this cell, best first.
+      const fits: BrickPlacement[] = [];
+      for (const sh of shapes) {
+        if (sh.kind === 'corner') {
+          for (let rot = 0; rot < 4; rot++) {
+            const cs = cornerCells(rot);
+            for (const [ci, cj] of cs) {
+              const x = i - ci, y = j - cj;
+              if (cs.every(([a, b]) => free(x + a, y + b, k))) {
+                fits.push({ x, y, z: k, w: 2, d: 2, color: 0, shape: 'corner', rot });
                 break;
               }
             }
-          if (!ok) continue;
-          const id = bricks.length;
-          bricks.push({ x: i, y: j, z: k, w, d, color: colorOf(k) });
-          for (let dj = 0; dj < d; dj++) for (let di = 0; di < w; di++) owner[idx(i + di, j + dj, k)] = id;
-          placed = true;
-          break;
+            if (fits.length && fits[fits.length - 1].shape === 'corner') break;
+          }
+          continue;
         }
-        if (placed) break;
+        const options: [number, number][] = alongX ? [[sh.b, sh.a], [sh.a, sh.b]] : [[sh.a, sh.b], [sh.b, sh.a]];
+        for (const [w, d] of options) {
+          if (i + w > nx || j + d > ny) continue;
+          let ok = true;
+          for (let dj = 0; dj < d && ok; dj++) for (let di = 0; di < w && ok; di++) ok = free(i + di, j + dj, k);
+          if (ok) {
+            fits.push({ x: i, y: j, z: k, w, d, color: 0 });
+            break;
+          }
+        }
       }
+      if (!fits.length) continue;
+      // Variety: now and then skip the biggest piece that fits.
+      let pick = 0;
+      while (pick < fits.length - 1 && P.mix > 0 && R.next() < P.mix * 0.6) pick++;
+      const br = { ...fits[pick], color: colorOf(k) };
+      if (P.round > 0 && !br.shape && br.w === br.d && (br.w === 1 || br.w === 2) && R.next() < P.round) br.shape = 'round';
+      const id = bricks.length;
+      bricks.push(br);
+      for (const [a, b] of brickCells(br)) owner[idx(a, b, k)] = id;
     }
     if (k % 6 === 0) onProgress?.(0.5 + (0.4 * k) / nz, 'Placing bricks');
   }
@@ -143,12 +170,13 @@ export function buildBricks(surface: MeshData, P: BricksParams, onProgress?: (f:
   const groups = [...size.values()].sort((p, q) => q - p);
   const loose = groups.slice(1).reduce((s, n) => s + n, 0);
   if (groups.length > 1) warnings.push(`${groups.length - 1} loose group${groups.length > 2 ? 's' : ''} (${loose} brick${loose > 1 ? 's' : ''}) are not held by any stud. Thicken the shell, turn off hollow, or glue them.`);
-  const studs = bricks.reduce((s, br) => s + br.w * br.d, 0);
+  const corners = bricks.filter((q) => q.shape === 'corner').length, rounds = bricks.filter((q) => q.shape === 'round').length;
+  const studs = bricks.reduce((s, br) => s + brickCells(br).length, 0);
   return {
     parts: [],
     assembly: { kind: 'planar', thickness: H, bricks: { origin: [x0, y0, z0], unit: H } },
     overlays: {},
-    stats: { bricks: bricks.length, layers: nz, studs, footprint: nx * ny, looseBricks: loose },
+    stats: { bricks: bricks.length, layers: nz, studs, footprint: nx * ny, looseBricks: loose, corners, round: rounds },
     warnings,
     kit: { bricks, brickUnit: P.unit },
   };

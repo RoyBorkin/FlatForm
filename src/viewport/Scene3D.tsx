@@ -7,6 +7,7 @@ import {
   BufferAttribute,
   BufferGeometry,
   Color,
+  CylinderGeometry,
   DoubleSide,
   Float32BufferAttribute,
   InstancedMesh,
@@ -342,9 +343,11 @@ function Bricks({ method }: { method: MethodResult }) {
   const B = useMemo(() => brickMatrices(method), [method]);
   const box = useMemo(unitBox, []);
   const stud = useMemo(studGeometry, []);
+  const round = useMemo(() => new CylinderGeometry(1, 1, 1, 28, 1), []);
   return (
     <>
       <Batch geo={box} matrices={B.boxes} colors={B.boxColors} roughness={0.35} />
+      <Batch geo={round} matrices={B.rounds} colors={B.roundColors} roughness={0.35} />
       <Batch geo={stud} matrices={B.studs} colors={B.studColors} roughness={0.35} />
     </>
   );

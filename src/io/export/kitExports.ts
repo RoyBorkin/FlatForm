@@ -6,8 +6,9 @@
  */
 import { jsPDF } from 'jspdf';
 import { APP_NAME, AUTHOR, AUTHOR_EMAIL, COPYRIGHT_LINE } from '@/brand';
-import { LEGO_COLORS, LEGO_PARTS } from '@/core/presets';
+import { LEGO_COLORS } from '@/core/presets';
 import type { BrickPlacement, MethodResult } from '@/core/types';
+import { brickCells, brickKind, cornerCells } from '@/core/bricks/catalog';
 import type { KitRequest } from '@/core/connectors/kit';
 import type { ProjectParams } from '@/core/params';
 
@@ -40,16 +41,15 @@ export function cutListCsv(method: MethodResult, units = 'mm'): string {
   return rows.join('\n');
 }
 
-const sizeKey = (b: BrickPlacement) => `${Math.min(b.w, b.d)}x${Math.max(b.w, b.d)}`;
 
 export function brickCounts(method: MethodResult) {
   const plate = method.kit?.brickUnit === 'plate';
-  const m = new Map<string, { w: number; d: number; plate: boolean; count: number }>();
+  const m = new Map<string, { w: number; d: number; plate: boolean; shape: 'rect' | 'round' | 'corner'; count: number }>();
   for (const b of method.kit?.bricks ?? []) {
-    const k = sizeKey(b);
-    const e = m.get(k) ?? { w: Math.max(b.w, b.d), d: Math.min(b.w, b.d), plate, count: 0 };
+    const k = brickKind(b, plate);
+    const e = m.get(k.key) ?? { w: k.w, d: k.d, plate, shape: k.shape, count: 0 };
     e.count++;
-    m.set(k, e);
+    m.set(k.key, e);
   }
   return [...m.values()].sort((a, b) => b.w * b.d - a.w * a.d);
 }
@@ -59,12 +59,11 @@ export function brickBom(method: MethodResult) {
   const plate = method.kit?.brickUnit === 'plate';
   const m = new Map<string, { part: string; size: string; color: number; count: number }>();
   for (const b of method.kit?.bricks ?? []) {
-    const size = sizeKey(b);
-    const part = LEGO_PARTS[size]?.[plate ? 'plate' : 'brick'] ?? '?';
-    const k = `${part}/${b.color}`;
-    const e = m.get(k) ?? { part, size, color: b.color, count: 0 };
+    const k = brickKind(b, plate);
+    const key = `${k.part}/${b.color}`;
+    const e = m.get(key) ?? { part: k.part, size: k.label, color: b.color, count: 0 };
     e.count++;
-    m.set(k, e);
+    m.set(key, e);
   }
   return [...m.values()].sort((a, b) => b.count - a.count);
 }
@@ -101,14 +100,21 @@ export function ldraw(method: MethodResult, title: string): string {
       out.push('0 STEP');
       layer = b.z;
     }
-    const part = LEGO_PARTS[sizeKey(b)]?.[plate ? 'plate' : 'brick'];
-    if (!part) continue;
+    const k = brickKind(b, plate);
+    if (k.part === '?') continue;
+    const Y = -(b.z + 1) * U;
+    if (k.shape === 'corner') {
+      // Origin at the corner stud, arms along +X and +Z; turn about Y to match.
+      const [ci, cj] = cornerCells(b.rot ?? 0)[0];
+      const rots = ['1 0 0 0 1 0 0 0 1', '0 0 -1 0 1 0 1 0 0', '-1 0 0 0 1 0 0 0 -1', '0 0 1 0 1 0 -1 0 0'];
+      out.push(`1 ${b.color} ${(b.x + ci + 0.5) * 20} ${Y} ${(b.y + cj + 0.5) * 20} ${rots[(b.rot ?? 0) & 3]} ${k.part}.dat`);
+      continue;
+    }
     const X = (b.x + b.w / 2) * 20;
     const Z = (b.y + b.d / 2) * 20;
-    const Y = -(b.z + 1) * U;
     // Long side along X as drawn; turn 90° about Y when the brick runs along our y.
     const rot = b.w >= b.d ? '1 0 0 0 1 0 0 0 1' : '0 0 1 0 1 0 -1 0 0';
-    out.push(`1 ${b.color} ${X} ${Y} ${Z} ${rot} ${part}.dat`);
+    out.push(`1 ${b.color} ${X} ${Y} ${Z} ${rot} ${k.part}.dat`);
   }
   out.push('0 STEP', '');
   return out.join('\r\n');
@@ -202,7 +208,11 @@ export function brickInstructions(method: MethodResult, title: string): Blob {
     // Layer below
     doc.setFillColor(228, 228, 228);
     doc.setDrawColor(200);
-    for (const b of byLayer.get(z - 1) ?? []) doc.rect(ox + (b.x - minX) * s, oy + (maxY - b.y - b.d) * s, b.w * s, b.d * s, 'FD');
+    const cell = (gx: number, gy: number, inset: number, style: 'F' | 'FD') => doc.rect(ox + (gx - minX) * s + inset, oy + (maxY - gy - 1) * s + inset, s - 2 * inset, s - 2 * inset, style);
+    for (const b of byLayer.get(z - 1) ?? []) {
+      if (b.shape === 'corner') for (const [gx, gy] of brickCells(b)) cell(gx, gy, 0, 'FD');
+      else doc.rect(ox + (b.x - minX) * s, oy + (maxY - b.y - b.d) * s, b.w * s, b.d * s, 'FD');
+    }
     // This layer
     doc.setDrawColor(30);
     doc.setLineWidth(Math.min(0.35, s * 0.06));
@@ -210,12 +220,22 @@ export function brickInstructions(method: MethodResult, title: string): Blob {
       const c = hex.get(b.color);
       doc.setFillColor(...hexRgb(c?.hex ?? '#888888'));
       const x = ox + (b.x - minX) * s, yy = oy + (maxY - b.y - b.d) * s;
-      doc.rect(x + 0.15, yy + 0.15, b.w * s - 0.3, b.d * s - 0.3, 'FD');
-      if (s >= 4) {
+      if (b.shape === 'round') doc.circle(x + (b.w * s) / 2, yy + (b.d * s) / 2, (b.w * s) / 2 - 0.2, 'FD');
+      else if (b.shape === 'corner') {
+        // Fill the three cells, then outline the L.
+        for (const [gx, gy] of brickCells(b)) cell(gx, gy, 0.15, 'F');
+        const [ci, cj] = cornerCells(b.rot ?? 0)[0];
+        const sx = ci === 0 ? 1 : -1, sy = cj === 0 ? 1 : -1;
+        const P0 = (gx: number, gy: number): [number, number] => [ox + (gx - minX) * s, oy + (maxY - gy) * s];
+        const cx = b.x + ci + (ci === 0 ? 0 : 1), cy = b.y + cj + (cj === 0 ? 0 : 1);
+        const pts = [P0(cx, cy), P0(cx + 2 * sx, cy), P0(cx + 2 * sx, cy + sy), P0(cx + sx, cy + sy), P0(cx + sx, cy + 2 * sy), P0(cx, cy + 2 * sy)];
+        doc.lines(pts.slice(1).map((q, n) => [q[0] - pts[n][0], q[1] - pts[n][1]]), pts[0][0], pts[0][1], [1, 1], 'S', true);
+      } else doc.rect(x + 0.15, yy + 0.15, b.w * s - 0.3, b.d * s - 0.3, 'FD');
+      if (s >= 4 && b.shape !== 'corner') {
         doc.setFontSize(Math.min(7, s * 0.9));
         const rgb = hexRgb(c?.hex ?? '#888888');
         doc.setTextColor(rgb[0] * 0.3 + rgb[1] * 0.59 + rgb[2] * 0.11 > 140 ? 20 : 250);
-        doc.text(`${Math.min(b.w, b.d)}×${Math.max(b.w, b.d)}`, x + (b.w * s) / 2, yy + (b.d * s) / 2 + 1, { align: 'center' });
+        doc.text(b.shape === 'round' ? 'o' : `${Math.min(b.w, b.d)}×${Math.max(b.w, b.d)}`, x + (b.w * s) / 2, yy + (b.d * s) / 2 + 1, { align: 'center' });
       }
     }
     footer(page++);

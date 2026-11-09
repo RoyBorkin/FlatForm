@@ -9,6 +9,7 @@ import { useUnits } from '@/ui/components/controls';
 import { Canvas2D } from './Canvas2D';
 
 const Scene3D = lazy(() => import('./Scene3D').then((m) => ({ default: m.Scene3D })));
+const PrintView = lazy(() => import('./PrintView').then((m) => ({ default: m.PrintView })));
 
 export function Viewport() {
   const view = useUI((s) => s.view);
@@ -24,12 +25,16 @@ export function Viewport() {
         <Suspense fallback={<div className="viewport__loading">Starting 3D view…</div>}>
           <Scene3D />
         </Suspense>
+      ) : view === 'print' ? (
+        <Suspense fallback={<div className="viewport__loading">Starting print view…</div>}>
+          <PrintView />
+        </Suspense>
       ) : hasParts ? (
         <Canvas2D mode={view === 'flat' ? 'flat' : 'sheets'} />
       ) : kitOnly ? (
         <div className="viewport__empty">
           {brickKit
-            ? 'A LEGO build has nothing to cut. The brick list is in the Method panel, and the Export step gives an LDraw model, printable bricks and layer-by-layer instructions.'
+            ? 'A LEGO build has nothing to cut. The brick list is in the Method panel, the Print view lays out printable bricks, and the Export step gives an LDraw model and layer-by-layer instructions.'
             : 'Bought sticks have nothing to cut from sheet. The cut list is in the Method panel; switch to flat strips to cut them from sheet instead.'}
         </div>
       ) : (

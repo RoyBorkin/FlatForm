@@ -17,7 +17,7 @@ import { writeSvg } from '@/core/export/svg';
 import { cutLength } from '@/core/parts';
 import { sheetsPdf } from './pdfSheets';
 import { exportModel, meshGroup, type ModelFormat } from './model3d';
-import { bakeAssembly, partExtrusion } from '@/viewport/geometry';
+import { bakeAssembly, meshDataToGeometry, partExtrusion } from '@/viewport/geometry';
 import { Group, Mesh } from 'three';
 import { geometry } from '@/state/engine';
 import { pinHoleDiameter } from '@/core/joinery/holes';
@@ -279,6 +279,47 @@ export const exporters = {
       files['print-list.csv'] = strToU8(counts.join('\n'));
       await saveFile(`${base}-${kind}-kit.zip`, zip(files));
       toast(`${parts.length} file${parts.length > 1 ? 's' : ''} for ${total} printed part${total > 1 ? 's' : ''} exported`);
+    }),
+  /** Every printed part laid out on beds, one 3MF (or STL) per plate, as shown in the Print view. */
+  printPlates: (format: ModelFormat) =>
+    run('Print plates', async () => {
+      const { printLayout, usePrint, collectPrintItems } = await import('@/state/printPlates');
+      const { copyMatrix } = await import('@/viewport/PrintView');
+      const p = useProject.getState().project;
+      const r = useResults.getState();
+      const base = safeName(p.name);
+      let items = usePrint.getState().items;
+      if (!items.length && r.method) items = await collectPrintItems(p, r.method);
+      const L = printLayout(p, r.nest, r.partIndex, items, false);
+      if (!L.plates) throw new Error('Nothing to print.');
+      const groups = Array.from({ length: L.plates }, () => new Group());
+      L.sheets.forEach((sp, k) => {
+        for (const q of sp.parts) {
+          const geo = partExtrusion(q.part, p.material.thickness);
+          if (!geo) continue;
+          const mesh = new Mesh(geo);
+          mesh.name = q.part.id;
+          mesh.position.set(q.x, q.y, 0);
+          mesh.rotation.z = q.rot;
+          groups[k].add(mesh);
+        }
+      });
+      const geos = items.map((it) => meshDataToGeometry(it.mesh));
+      for (const c of L.pack.copies) {
+        const mesh = new Mesh(geos[c.item]);
+        mesh.name = items[c.item].name;
+        mesh.applyMatrix4(copyMatrix(items[c.item], c.x, c.y, c.rot));
+        groups[c.plate]?.add(mesh);
+      }
+      const files: Record<string, Uint8Array> = {};
+      for (let k = 0; k < groups.length; k++) {
+        if (!groups[k].children.length) continue;
+        files[`${base}-print-plate-${String(k + 1).padStart(2, '0')}.${format}`] = await blobBytes(await exportModel(groups[k], format));
+      }
+      const list = ['file,group,count', ...items.map((it) => `${it.name},"${it.group}",${it.count}`), '', `"${COPYRIGHT_LINE}"`];
+      files['print-list.csv'] = strToU8(list.join('\n'));
+      await saveFile(`${base}-print-plates.zip`, zip(files));
+      toast(`${Object.keys(files).length - 1} print plate${Object.keys(files).length > 2 ? 's' : ''} exported`);
     }),
   cutList: () =>
     run('Cut list', async () => {

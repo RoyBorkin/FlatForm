@@ -201,7 +201,7 @@ export function defaultProject(): ProjectParams {
       textHeight: 5,
     },
     sticks: { targetFaces: 300, profile: 'round', preset: 'dowel6', size: 6, inner: 4, stockLength: 1000, lengthStep: 1, labelSticks: true, textHeight: 3 },
-    bricks: { unit: 'brick', hollow: true, shell: 2, sizes: ['1x1', '1x2', '1x3', '1x4', '1x6', '1x8', '2x2', '2x3', '2x4', '2x6', '2x8'], stagger: true, colorMode: 'layers', color: 4, palette: [4, 191, 72] },
+    bricks: { unit: 'brick', hollow: true, shell: 2, sizes: ['1x1', '1x2', '1x3', '1x4', '1x6', '1x8', '2x2', '2x3', '2x4', '2x6', '2x8'], stagger: true, corners: false, round: 0, mix: 0, seed: 1, colorMode: 'layers', color: 4, palette: [4, 191, 72] },
     stack: {
       mode: 'relief',
       count: 12,

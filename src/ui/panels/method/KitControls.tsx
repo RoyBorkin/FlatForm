@@ -1,10 +1,12 @@
 /* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
+import { Shuffle } from 'lucide-react';
 import { useMemo } from 'react';
 import { useProject } from '@/state/project';
 import { useResults } from '@/state/results';
 import type { BrickSize, BricksParams, StackParams, SticksParams } from '@/core/params';
 import { LEGO_COLORS, LEGO_PARTS, STICK_PRESETS } from '@/core/presets';
-import { Callout, NumberField, Section, SegmentedField, SelectField, SliderField, SwitchField, useUnits } from '../../components/controls';
+import { brickKind } from '@/core/bricks/catalog';
+import { Callout, IconButton, NumberField, Section, SegmentedField, SelectField, SliderField, SwitchField, useUnits } from '../../components/controls';
 
 // ------------------------------------------------------------------ sticks
 
@@ -100,7 +102,7 @@ export function CutList() {
 
 // ------------------------------------------------------------------ LEGO
 
-const SIZES: BrickSize[] = ['1x1', '1x2', '1x3', '1x4', '1x6', '1x8', '2x2', '2x3', '2x4', '2x6', '2x8'];
+const SIZES: BrickSize[] = ['1x1', '1x2', '1x3', '1x4', '1x6', '1x8', '1x10', '1x12', '2x2', '2x3', '2x4', '2x6', '2x8', '2x10', '4x4', '4x6', '4x8'];
 
 export function BricksControls() {
   const B = useProject((s) => s.project.bricks);
@@ -129,8 +131,8 @@ export function BricksControls() {
             <label key={sz} className="chip">
               <input
                 type="checkbox"
-                checked={B.sizes.includes(sz)}
-                disabled={sz === '1x1'}
+                checked={B.sizes.includes(sz) && (B.unit === 'plate' || !!LEGO_PARTS[sz]?.brick)}
+                disabled={sz === '1x1' || (B.unit === 'brick' && !LEGO_PARTS[sz]?.brick)}
                 onChange={(e) =>
                   set((x) => {
                     x.sizes = e.target.checked ? [...new Set([...x.sizes, sz])] : x.sizes.filter((q) => q !== sz);
@@ -141,6 +143,20 @@ export function BricksControls() {
             </label>
           ))}
         </fieldset>
+        {B.unit === 'brick' && <p className="muted small">4×4 and 4×8 come only as plates.</p>}
+      </Section>
+      <Section title="Variety">
+        <SwitchField label="Corner pieces" hint="L-shaped 2×2 corners (3 studs) where they fit. They tie walls together at turns." checked={B.corners} onChange={(v) => set((x) => void (x.corners = v))} />
+        <SliderField label="Round pieces" hint="Share of 1×1 and 2×2 squares swapped, at random, for round 1×1 and round 2×2 pieces." value={Math.round(B.round * 100)} min={0} max={100} step={1} unit="%" onChange={(v) => set((x) => void (x.round = v / 100))} />
+        <SliderField label="Size mix" hint="How often a smaller piece is used where a bigger one fits. More mix = more kinds of pieces and a busier look." value={Math.round(B.mix * 100)} min={0} max={100} step={1} unit="%" onChange={(v) => set((x) => void (x.mix = v / 100))} />
+        {(B.round > 0 || B.mix > 0) && (
+          <div className="seed-row">
+            <NumberField label="Random seed" value={B.seed} min={1} max={9999} step={1} onChange={(v) => set((x) => void (x.seed = Math.round(v)))} />
+            <IconButton label="New random mix" onClick={() => set((x) => void (x.seed = 1 + Math.floor(Math.random() * 9999)))}>
+              <Shuffle size={14} aria-hidden />
+            </IconButton>
+          </div>
+        )}
       </Section>
       <Section title="Colours">
         <SegmentedField
@@ -190,11 +206,12 @@ export function BrickList() {
   const kit = useResults((s) => s.method?.kit);
   const rows = useMemo(() => {
     if (!kit?.bricks) return [];
-    const map = new Map<string, { size: string; color: number; count: number }>();
+    const plate = kit.brickUnit === 'plate';
+    const map = new Map<string, { size: string; part: string; color: number; count: number }>();
     for (const b of kit.bricks) {
-      const size = `${Math.min(b.w, b.d)}x${Math.max(b.w, b.d)}`;
-      const key = `${size}|${b.color}`;
-      const r = map.get(key) ?? { size, color: b.color, count: 0 };
+      const k = brickKind(b, plate);
+      const key = `${k.key}|${b.color}`;
+      const r = map.get(key) ?? { size: k.label, part: k.part, color: b.color, count: 0 };
       r.count++;
       map.set(key, r);
     }
@@ -221,7 +238,7 @@ export function BrickList() {
             return (
               <tr key={`${r.size}${r.color}`}>
                 <td>
-                  {r.size.replace('x', '×')} <span className="muted">{LEGO_PARTS[r.size]?.[plate ? 'plate' : 'brick']}</span>
+                  {r.size} <span className="muted">{r.part}</span>
                 </td>
                 <td>
                   <span className="dot" style={{ background: c?.hex }} aria-hidden /> {c?.name ?? r.color}

@@ -124,10 +124,14 @@ export interface BrickPlacement {
   x: number;
   y: number;
   z: number;
-  /** Footprint in studs along x and y. */
+  /** Footprint in studs along x and y (a corner piece's 2×2 bounding square). */
   w: number;
   d: number;
   color: number;
+  /** Round pieces (1×1 or 2×2) and L-shaped corners; plain rectangles when absent. */
+  shape?: 'round' | 'corner';
+  /** Corners: 0 arms +x,+y · 1 arms −x,+y · 2 arms −x,−y · 3 arms +x,−y (the missing stud is opposite the corner stud). */
+  rot?: number;
 }
 
 export interface Assembly3D {

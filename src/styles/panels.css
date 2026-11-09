@@ -958,3 +958,113 @@
 .pattern-chip[aria-checked='true'] .pattern-chip__label {
   color: var(--text);
 }
+
+/* print view: printed parts on their beds */
+.print-view {
+  position: absolute;
+  inset: 0;
+}
+.print-view__bar {
+  position: absolute;
+  top: var(--sp-3);
+  left: var(--sp-3);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  padding: 4px 6px 4px 4px;
+  border-radius: calc(var(--radius) + 3px);
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  max-width: calc(100% - 2 * var(--sp-3));
+}
+.print-view__stats {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+  padding: 0 4px;
+}
+.print-view__warn {
+  position: absolute;
+  bottom: var(--sp-3);
+  left: var(--sp-3);
+  right: var(--sp-3);
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--warn) 16%, var(--panel));
+  border: 1px solid color-mix(in srgb, var(--warn) 50%, transparent);
+  font-size: var(--fs-sm);
+}
+.print-view__plate-label {
+  font-size: var(--fs-xs);
+  color: var(--text-2);
+  white-space: nowrap;
+  pointer-events: none;
+  font-weight: 600;
+}
+.print-view__count {
+  font: 600 var(--fs-xs) / 1 var(--font-num);
+  color: var(--text);
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px 6px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.print-list {
+  position: absolute;
+  top: calc(var(--sp-3) + 48px);
+  right: var(--sp-3);
+  bottom: var(--sp-3);
+  width: min(300px, 45%);
+  overflow: auto;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--panel) 95%, transparent);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+.print-list__head {
+  display: flex;
+  justify-content: space-between;
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-sm);
+  font-weight: 650;
+}
+.print-list__name {
+  font-family: var(--font-num);
+  font-size: var(--fs-xs);
+  word-break: break-all;
+}
+.print-view .viewport__empty {
+  pointer-events: none;
+}
+.print-view__bar {
+  z-index: 2;
+}
+.print-view__labels {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+.print-view .scene3d {
+  position: absolute;
+  inset: 0;
+}
+.print-list {
+  z-index: 3;
+}
+.print-view__bar .seg {
+  min-width: max-content;
+}
+.print-view__bar .seg__item {
+  white-space: nowrap;
+  flex: 0 0 auto;
+}

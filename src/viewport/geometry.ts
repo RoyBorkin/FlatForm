@@ -26,6 +26,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import type { MeshData, MethodResult, Part2D, Strip3D } from '@/core/types';
 import { signedArea } from '@/core/polygon/polygon';
 import { LEGO_COLORS } from '@/core/presets';
+import { brickCells, cornerCells } from '@/core/bricks/catalog';
 
 export function meshDataToGeometry(m: MeshData): BufferGeometry {
   const g = new BufferGeometry();
@@ -198,15 +199,18 @@ export function bakeAssembly(method: MethodResult, colors: string[]): Group {
   if (A.hubs) bake('junction-hubs', unitSphere(), hubMatrices(A.hubs), '#faaf40');
   if (A.bricks) {
     const B = brickMatrices(method);
-    const byColor = new Map<string, { boxes: Matrix4[]; studs: Matrix4[] }>();
-    B.boxes.forEach((m, i) => {
-      const e = byColor.get(B.boxColors[i]) ?? { boxes: [], studs: [] };
-      e.boxes.push(m);
-      byColor.set(B.boxColors[i], e);
-    });
-    B.studs.forEach((m, i) => byColor.get(B.studColors[i])?.studs.push(m));
+    const byColor = new Map<string, { boxes: Matrix4[]; rounds: Matrix4[]; studs: Matrix4[] }>();
+    const at = (c: string) => {
+      const e = byColor.get(c) ?? { boxes: [], rounds: [], studs: [] };
+      byColor.set(c, e);
+      return e;
+    };
+    B.boxes.forEach((m, i) => at(B.boxColors[i]).boxes.push(m));
+    B.rounds.forEach((m, i) => at(B.roundColors[i]).rounds.push(m));
+    B.studs.forEach((m, i) => at(B.studColors[i]).studs.push(m));
     for (const [c, e] of byColor) {
       bake(`bricks-${c.slice(1)}`, new BoxGeometry(1, 1, 1), e.boxes, c);
+      bake(`round-${c.slice(1)}`, new CylinderGeometry(1, 1, 1, 32, 1), e.rounds, c);
       bake(`studs-${c.slice(1)}`, studGeometry(), e.studs, c);
     }
   }
@@ -245,30 +249,42 @@ export function hubMatrices(hubs: Float32Array): Matrix4[] {
   return out;
 }
 
-/** LEGO build: a box per brick and a stud on every cell not covered by the layer above. */
+/** LEGO build: boxes and cylinders for the pieces, and a stud on every cell not covered by the layer above. */
 export function brickMatrices(method: MethodResult) {
   const list = method.kit?.bricks ?? [];
   const g = method.assembly.bricks;
-  const boxes: Matrix4[] = [], boxColors: string[] = [], studs: Matrix4[] = [], studColors: string[] = [];
-  if (!g || !list.length) return { boxes, boxColors, studs, studColors };
+  const boxes: Matrix4[] = [], boxColors: string[] = [], rounds: Matrix4[] = [], roundColors: string[] = [], studs: Matrix4[] = [], studColors: string[] = [];
+  if (!g || !list.length) return { boxes, boxColors, rounds, roundColors, studs, studColors };
   const P = 8, H = g.unit, [x0, y0, z0] = g.origin;
   const hex = new Map(LEGO_COLORS.map((c) => [c.code, c.hex]));
   const key = (i: number, j: number, k: number) => `${i},${j},${k}`;
   const filled = new Set<string>();
-  for (const b of list) for (let i = 0; i < b.w; i++) for (let j = 0; j < b.d; j++) filled.add(key(b.x + i, b.y + j, b.z));
+  for (const b of list) for (const [i, j] of brickCells(b)) filled.add(key(i, j, b.z));
   const up = new Quaternion().setFromUnitVectors(Y, new Vector3(0, 0, 1));
+  const box = (x: number, y: number, w: number, d: number, z: number, c: string) => {
+    boxes.push(new Matrix4().compose(new Vector3(x0 + (x + w / 2) * P, y0 + (y + d / 2) * P, z0 + (z + 0.5) * H), new Quaternion(), new Vector3(w * P - 0.2, d * P - 0.2, H - 0.04)));
+    boxColors.push(c);
+  };
   for (const b of list) {
     const c = hex.get(b.color) ?? '#c91a09';
-    boxes.push(new Matrix4().compose(new Vector3(x0 + (b.x + b.w / 2) * P, y0 + (b.y + b.d / 2) * P, z0 + (b.z + 0.5) * H), new Quaternion(), new Vector3(b.w * P - 0.2, b.d * P - 0.2, H - 0.04)));
-    boxColors.push(c);
-    for (let i = 0; i < b.w; i++)
-      for (let j = 0; j < b.d; j++) {
-        if (filled.has(key(b.x + i, b.y + j, b.z + 1))) continue;
-        studs.push(new Matrix4().compose(new Vector3(x0 + (b.x + i + 0.5) * P, y0 + (b.y + j + 0.5) * P, z0 + (b.z + 1) * H), up, new Vector3(1, 1, 1)));
-        studColors.push(c);
-      }
+    if (b.shape === 'round') {
+      rounds.push(new Matrix4().compose(new Vector3(x0 + (b.x + b.w / 2) * P, y0 + (b.y + b.d / 2) * P, z0 + (b.z + 0.5) * H), up, new Vector3((b.w * P) / 2 - 0.1, H - 0.04, (b.w * P) / 2 - 0.1)));
+      roundColors.push(c);
+    } else if (b.shape === 'corner') {
+      // Two overlapping bars make the L.
+      const [[ci, cj], [ai, aj], [bi, bj]] = cornerCells(b.rot ?? 0).map(([i, j]) => [b.x + i, b.y + j]);
+      box(Math.min(ci, ai), cj, 2, 1, b.z, c);
+      box(ci, Math.min(cj, bj), 1, 2, b.z, c);
+      void aj;
+      void bi;
+    } else box(b.x, b.y, b.w, b.d, b.z, c);
+    for (const [i, j] of brickCells(b)) {
+      if (filled.has(key(i, j, b.z + 1))) continue;
+      studs.push(new Matrix4().compose(new Vector3(x0 + (i + 0.5) * P, y0 + (j + 0.5) * P, z0 + (b.z + 1) * H), up, new Vector3(1, 1, 1)));
+      studColors.push(c);
+    }
   }
-  return { boxes, boxColors, studs, studColors };
+  return { boxes, boxColors, rounds, roundColors, studs, studColors };
 }
 
 /** Unit-height prism (z from 0 to 1) in the spacer's cross-section, bored for the rod. */

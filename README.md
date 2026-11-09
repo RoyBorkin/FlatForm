@@ -51,7 +51,7 @@ It started from the "organic shape to fabrication" workflow, usually built as a 
 | Frames | **Mesh lines** | Every edge of the mesh becomes a flat bar, standing on edge (the matchstick-frame look) or lying flat. Bars are rounded to a length step so equal ones can be batch-cut; node hubs can be printed with arms at the real angles. |
 | Frames | **Triangles** | The surface is rebuilt from a few repeated triangle shapes: edge lengths are clustered into classes, the mesh is relaxed toward them (position-based springs projected to the surface), and each face is cut as the ideal triangle of its classes. Solid panels or open frames, with gap and corner trim. |
 | Frames | **Sticks** | Every edge becomes a stick: toothpicks, bamboo skewers, wood dowels, carbon or aluminium tubes, square profiles, or **laser-cut flat strips**. Sticks are rounded to a length step, lettered A, B, … and packed into stock lengths for a cut list; each node gets a printed **junction hub** with a socket at every stick's real angle, and identical hubs share one file. |
-| Frames | **LEGO bricks** | The shape is rebuilt from real LEGO bricks or plates on the 8 mm stud grid: solid or hollow with a set wall, staggered joints, the brick sizes you own, and colour by one colour, layers or height bands. You get a brick list with LDraw/BrickLink part numbers, an **LDraw model** (one step per layer), layer-by-layer instructions and printable LEGO-compatible bricks. |
+| Frames | **LEGO bricks** | The shape is rebuilt from real LEGO bricks or plates on the 8 mm stud grid: solid or hollow with a set wall, staggered joints, the brick sizes you own (1×1 up to 2×10, and 4×4 to 4×8 plates), and colour by one colour, layers or height bands. **Variety**: L-shaped 2×2 corner pieces, a share of 1×1 and 2×2 squares swapped at random for round pieces, and a size mix that sometimes uses a smaller piece where a bigger one fits (with a seed). You get a brick list with LDraw/BrickLink part numbers, an **LDraw model** (one step per layer), layer-by-layer instructions and printable LEGO-compatible bricks. |
 | Sections | **Stacked slices** | Contour slices along X, Y or Z, solid or hollow, on dowels, with the next slice engraved on each one. |
 | Sections | **Layers** | Spaced layers in **any direction** (azimuth / tilt) or fanned **along a curve** you draw. Rods run through the longest run of layers they can; **3D-printed spacers** (round, square, hex or star, any size) hold the gaps, grouped by length. Hollow layers keep a hub and spokes around every rod. |
 | Sections | **Interlocking waffle** | Two families of ribs with half-slots, fit clearance and lead-in chamfers, each slot labelled with its mating rib. |
@@ -110,6 +110,11 @@ Every joinery panel shows a live preview drawn by the same code that cuts the pa
 - **Print plates** (3D print) as STL or 3MF, one per bed.
 - Every file carries the author credit: DXF comments, SVG metadata, PDF properties and footer, 3MF metadata, STL header.
 - **Project file** (`.flatform`), and a single **export everything** zip.
+
+**Print view**
+- Next to *Sheets*: everything that has to be 3D printed — junction hubs, crossing clips, cardboard connectors, printed pins and spacers, LEGO-compatible bricks (MachineBlocks-style: rectangles, rounds and corners), and the sheet parts themselves when you print instead of cut — laid out on your print bed, plate by plate, with the filament estimate.
+- **Hide duplicates** shows one of each with its count and a parts list.
+- Export every plate as 3MF (one file per plate, plus a print list).
 
 **Interface**
 - The left rail follows the build order and shows each step's live result. The status bar shows parts, pins, sheets, cut length, cut time and material cost.

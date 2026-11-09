@@ -174,6 +174,11 @@ export function ExportPanel() {
             Export
           </Button>
         </ExportRow>
+        <ExportRow icon={<Printer size={16} aria-hidden />} title="Everything to print, on plates" text="Hubs, clips, connectors, bricks and printed parts, laid out on your print bed (see the Print view)">
+          <Button size="sm" onClick={go('pplates', () => exporters.printPlates('3mf'))} disabled={!ready || !!busy}>
+            {busy === 'pplates' ? 'Building…' : '3MF'}
+          </Button>
+        </ExportRow>
         <ExportRow
           icon={<Package size={16} aria-hidden />}
           title={hasSpacers ? 'Printed spacers & connectors' : 'Printed connectors'}

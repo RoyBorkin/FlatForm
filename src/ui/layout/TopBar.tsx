@@ -1,6 +1,6 @@
 /* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 import { LogoMark } from '../components/LogoMark';
-import { Box, Download, Grid2x2, LayoutPanelTop, Redo2, Undo2, FolderOpen, Save } from 'lucide-react';
+import { Box, Download, Grid2x2, Printer, LayoutPanelTop, Redo2, Undo2, FolderOpen, Save } from 'lucide-react';
 import { useStore } from 'zustand';
 import { useProject, undo, redo } from '@/state/project';
 import { useUI, type ViewId } from '@/state/ui';
@@ -40,6 +40,7 @@ export function TopBar() {
             { value: '3d', label: '3D', icon: <Box size={14} aria-hidden /> },
             { value: 'flat', label: 'Flat parts', icon: <LayoutPanelTop size={14} aria-hidden /> },
             { value: 'sheets', label: 'Sheets', icon: <Grid2x2 size={14} aria-hidden /> },
+            { value: 'print', label: 'Print', icon: <Printer size={14} aria-hidden /> },
           ]}
         />
       </div>

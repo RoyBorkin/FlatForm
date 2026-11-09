@@ -129,7 +129,7 @@ export interface SticksParams {
 
 // ---------------------------------------------------------------- LEGO bricks
 
-export type BrickSize = '1x1' | '1x2' | '1x3' | '1x4' | '1x6' | '1x8' | '2x2' | '2x3' | '2x4' | '2x6' | '2x8';
+export type BrickSize = '1x1' | '1x2' | '1x3' | '1x4' | '1x6' | '1x8' | '1x10' | '1x12' | '2x2' | '2x3' | '2x4' | '2x6' | '2x8' | '2x10' | '4x4' | '4x6' | '4x8';
 
 export interface BricksParams {
   /** Build in full bricks (9.6 mm) or plates (3.2 mm). */
@@ -140,6 +140,13 @@ export interface BricksParams {
   sizes: BrickSize[];
   /** Alternate brick direction every layer so joints overlap, like a brick wall. */
   stagger: boolean;
+  /** Use 2×2 corner pieces (L-shaped, 3 studs) where they fit. */
+  corners: boolean;
+  /** Share of 1×1 and 2×2 squares swapped for round pieces, at random (0–1). */
+  round: number;
+  /** How often a smaller piece is used where a bigger one would fit, for a more varied mix (0–1). */
+  mix: number;
+  seed: number;
   colorMode: 'single' | 'layers' | 'height';
   /** LDraw colour codes. */
   color: number;

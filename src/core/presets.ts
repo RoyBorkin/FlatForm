@@ -116,8 +116,8 @@ export const LEGO_COLORS: { code: number; name: string; hex: string }[] = [
   { code: 2, name: 'Green', hex: '#237841' },
 ];
 
-/** LDraw part numbers for each footprint (long side along LDraw X). */
-export const LEGO_PARTS: Record<string, { brick: string; plate: string }> = {
+/** LDraw part numbers for each footprint (long side along LDraw X). Sizes without a brick part are plate-only. */
+export const LEGO_PARTS: Record<string, { brick?: string; plate: string }> = {
   '1x1': { brick: '3005', plate: '3024' },
   '1x2': { brick: '3004', plate: '3023' },
   '1x3': { brick: '3622', plate: '3623' },
@@ -129,4 +129,17 @@ export const LEGO_PARTS: Record<string, { brick: string; plate: string }> = {
   '2x4': { brick: '3001', plate: '3020' },
   '2x6': { brick: '2456', plate: '3795' },
   '2x8': { brick: '3007', plate: '3034' },
+  '1x10': { brick: '6111', plate: '4477' },
+  '1x12': { brick: '6112', plate: '60479' },
+  '2x10': { brick: '3006', plate: '3832' },
+  '4x4': { plate: '3031' },
+  '4x6': { brick: '2356', plate: '3032' },
+  '4x8': { plate: '3035' },
 };
+
+/** Round and corner pieces. Origins: round at the centre; corner at the centre of its corner stud, arms along +X and +Z. */
+export const LEGO_SPECIAL = {
+  round1: { brick: '3062b', plate: '4073', label: 'Round 1×1' },
+  round2: { brick: '3941', plate: '4032', label: 'Round 2×2' },
+  corner: { brick: '2357', plate: '2420', label: 'Corner 2×2' },
+} as const;

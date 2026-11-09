@@ -6,7 +6,7 @@ import type { Mode, WorldId } from '@/themes/themes';
 import { WORLDS } from '@/themes/themes';
 
 export type StepId = 'shape' | 'surface' | 'method' | 'joinery' | 'material' | 'nest' | 'export' | 'settings';
-export type ViewId = '3d' | 'flat' | 'sheets';
+export type ViewId = '3d' | 'flat' | 'sheets' | 'print';
 export type ShapeTool = 'build' | 'sculpt';
 export type SculptBrush = 'draw' | 'inflate' | 'smooth' | 'flatten' | 'grab' | 'pinch' | 'erase';
 

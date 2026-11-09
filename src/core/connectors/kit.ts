@@ -272,6 +272,37 @@ export function legoBrick(W: ManifoldToplevel, w: number, d: number, plate: bool
   return onBed(body);
 }
 
+const STUD_R = 2.4, STUD_H = 1.8, PITCH = 8, PLAY = 0.1;
+
+/** Round LEGO-compatible piece (1×1 or 2×2): a shell with studs on top and, on 2×2, a centre tube. */
+export function legoRound(W: ManifoldToplevel, n: number, plate: boolean): ManifoldT {
+  const { Manifold } = W;
+  const H = plate ? 3.2 : 9.6;
+  const R = (n * PITCH) / 2 - PLAY, wall = 1.2, top = 1.0;
+  const parts: ManifoldT[] = [Manifold.cylinder(H, R, R, SEG * 2).subtract(Manifold.cylinder(H - top + 0.01, R - wall, R - wall, SEG * 2).translate([0, 0, -0.01]))];
+  for (let i = 0; i < n; i++) for (let k = 0; k < n; k++) parts.push(Manifold.cylinder(STUD_H, STUD_R, STUD_R, SEG).translate([(i - (n - 1) / 2) * PITCH, (k - (n - 1) / 2) * PITCH, H]));
+  if (n >= 2) parts.push(Manifold.cylinder(H - top, 6.51 / 2, 6.51 / 2, SEG).subtract(Manifold.cylinder(H, 2.4, 2.4, SEG).translate([0, 0, -0.5])));
+  else parts.push(Manifold.cylinder(H - top, 1.6, 1.6, SEG)); // 1×1: a centre pin grips the stud below
+  return onBed(Manifold.union(parts));
+}
+
+/** 2×2 corner piece: an L of three studs (the +x+y stud missing), shelled, with a pin under each arm. */
+export function legoCorner(W: ManifoldToplevel, plate: boolean): ManifoldT {
+  const { Manifold, CrossSection } = W;
+  const H = plate ? 3.2 : 9.6;
+  const wall = 1.2, top = 1.0;
+  const L = (o: number): [number, number][] => [
+    [o, o], [2 * PITCH - o, o], [2 * PITCH - o, PITCH - o], [PITCH - o, PITCH - o], [PITCH - o, 2 * PITCH - o], [o, 2 * PITCH - o],
+  ];
+  const outer = new CrossSection([L(PLAY)], 'NonZero').extrude(H);
+  const inner = new CrossSection([L(PLAY + wall)], 'NonZero').extrude(H - top + 0.01).translate([0, 0, -0.01]);
+  const parts: ManifoldT[] = [outer.subtract(inner)];
+  for (const [i, k] of [[0, 0], [1, 0], [0, 1]]) parts.push(Manifold.cylinder(STUD_H, STUD_R, STUD_R, SEG).translate([PITCH / 2 + i * PITCH, PITCH / 2 + k * PITCH, H]));
+  // Pins between the studs of each arm hold the studs below.
+  parts.push(Manifold.cylinder(H - top, 1.6, 1.6, SEG).translate([PITCH, PITCH / 2, 0]), Manifold.cylinder(H - top, 1.6, 1.6, SEG).translate([PITCH / 2, PITCH, 0]));
+  return onBed(Manifold.union(parts));
+}
+
 export type { V3 };
 
 export interface KitRequest {
@@ -279,7 +310,7 @@ export interface KitRequest {
   joinery: JoineryParams;
   thickness: number;
   data?: import('../types').MethodResult['connectorData'];
-  bricks?: { w: number; d: number; plate: boolean; count: number }[];
+  bricks?: { w: number; d: number; plate: boolean; count: number; shape?: 'rect' | 'round' | 'corner' }[];
 }
 
 export interface KitPart {
@@ -326,7 +357,12 @@ export function buildKit(W: ManifoldToplevel, req: KitRequest, limit = Infinity)
       for (const c of req.data?.seamClips ?? []) push(`cardboard-connector_${c.angle}deg_t${req.thickness}`, c.count, cardboardClip(W, c.angle, req.thickness, J.cardboard));
       break;
     case 'bricks':
-      for (const b of req.bricks ?? []) push(`brick_${Math.min(b.w, b.d)}x${Math.max(b.w, b.d)}${b.plate ? '_plate' : ''}`, b.count, legoBrick(W, Math.max(b.w, b.d), Math.min(b.w, b.d), b.plate));
+      for (const b of req.bricks ?? []) {
+        const shape = b.shape ?? 'rect';
+        const name = shape === 'round' ? `round_${b.w}x${b.w}` : shape === 'corner' ? 'corner_2x2' : `brick_${Math.min(b.w, b.d)}x${Math.max(b.w, b.d)}`;
+        const m = shape === 'round' ? legoRound(W, b.w, b.plate) : shape === 'corner' ? legoCorner(W, b.plate) : legoBrick(W, Math.max(b.w, b.d), Math.min(b.w, b.d), b.plate);
+        push(`${name}${b.plate ? '_plate' : ''}`, b.count, m);
+      }
       break;
   }
   return out;

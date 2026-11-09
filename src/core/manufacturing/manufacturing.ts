@@ -141,7 +141,7 @@ export function estimate(parts: Part2D[], p: ProjectParams): Estimate {
 export function kitWeight(kit: import('../types').Kit | undefined, p: ProjectParams): { weight: number; label: string } {
   if (kit?.bricks?.length) {
     const plate = kit.brickUnit === 'plate';
-    const studs = kit.bricks.reduce((s, b) => s + b.w * b.d, 0);
+    const studs = kit.bricks.reduce((s, b) => s + (b.shape === 'corner' ? 3 : b.w * b.d), 0);
     // About 0.29 g per stud for bricks (a 2×4 weighs ~2.3 g), 0.2 g for plates.
     return { weight: studs * (plate ? 0.2 : 0.29), label: `${kit.bricks.length.toLocaleString()} ${plate ? 'plates' : 'bricks'}` };
   }
