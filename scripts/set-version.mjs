@@ -5,13 +5,15 @@
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const v = process.argv[2];
 if (!/^\d+\.\d+\.\d+$/.test(v ?? '')) {
   console.error('Usage: npm run version:set <major.minor.patch>, e.g. 1.1.0');
   process.exit(1);
 }
-const root = new URL('..', import.meta.url).pathname;
+// fileURLToPath, not URL.pathname: on Windows .pathname gives "/D:/...", which is not a valid path.
+const root = fileURLToPath(new URL('..', import.meta.url));
 const json = (f, fn) => {
   const p = join(root, f);
   const d = JSON.parse(readFileSync(p, 'utf8'));
