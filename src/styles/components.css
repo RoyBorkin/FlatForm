@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 /* ---------------------------------------------------------------- buttons */
 .btn {
   display: inline-flex;
@@ -637,4 +637,41 @@
   .task__bar[data-indeterminate='true'] span {
     animation: none;
   }
+}
+
+/* crash screen (ErrorBoundary) */
+.crash {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--bg);
+  color: var(--text);
+}
+.crash__box {
+  display: grid;
+  gap: 12px;
+  max-width: 480px;
+}
+.crash__box h1 {
+  margin: 0;
+  font-size: var(--fs-xl);
+}
+.crash__box p {
+  margin: 0;
+  color: var(--text-2);
+}
+.crash__box pre {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: var(--bg-sunken);
+  font: var(--fs-sm) / 1.4 var(--font-num);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.crash__actions {
+  display: flex;
+  gap: 8px;
 }

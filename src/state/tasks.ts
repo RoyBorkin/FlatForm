@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 /**
  * Long-running tasks the user is waiting on (exports, connectors, the guide,
  * a slow recompute). The task overlay shows them with live progress.

@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 import { useEffect, useState } from 'react';
 import { useUI } from '@/state/ui';
 import { legible } from '@/themes/legible';

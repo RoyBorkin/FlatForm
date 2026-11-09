@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 /**
  * Turns nested parts into final drawing entities in sheet coordinates (mm,
  * origin bottom-left, y up). Every exporter draws from this one list, so

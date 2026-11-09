@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 /**
  * Form controls for the inspector. Every control is a standard, accessible
  * widget (Radix primitives underneath) with a visible label. Length values

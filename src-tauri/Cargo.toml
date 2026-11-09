@@ -1,11 +1,12 @@
-# FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT
+# FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved
 [package]
 name = "flatform"
-version = "0.2.0"
+version = "1.0.0"
 description = "Turn 3D shapes into flat sheet parts"
 authors = ["Roy Borkin <royborkin@gmail.com>"]
 homepage = "https://royborkin.github.io/"
-license = "MIT"
+license = "LicenseRef-Proprietary"
+publish = false
 edition = "2021"
 rust-version = "1.77"
 

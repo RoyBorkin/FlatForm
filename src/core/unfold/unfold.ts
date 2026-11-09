@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 /**
  * Unfolding engine shared by folded panels, paper-craft, minimal joinery and
  * flex hinges. Triangles are unfolded about their shared edges along a

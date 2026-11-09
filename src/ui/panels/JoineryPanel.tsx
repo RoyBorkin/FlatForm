@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 import { lazy, Suspense } from 'react';
 import { useProject } from '@/state/project';
 import { JOINERY_SUPPORT, pinHoleDiameter } from '@/core/joinery/holes';

@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 /**
  * Parametric 3D-printed connectors, built with Manifold (exact, watertight
  * booleans) so every STL slices cleanly. All sizes in mm; each connector is

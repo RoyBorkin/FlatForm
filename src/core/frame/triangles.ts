@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 /**
  * Triangles: the surface is rebuilt from a handful of repeated triangle
  * shapes. Edge lengths are clustered into a few classes, the mesh is relaxed

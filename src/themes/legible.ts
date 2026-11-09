@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 /** Colour helpers: keep user-chosen part colours readable on dark and light grounds. */
 const hex = (c: string): [number, number, number] | null => {
   const m = /^#?([0-9a-f]{6})$/i.exec(c.trim());
@@ -26,7 +26,7 @@ export function mix(a: string, b: string, t: number): string {
   return toHex(x[0] + (y[0] - x[0]) * t, x[1] + (y[1] - x[1]) * t, x[2] + (y[2] - x[2]) * t);
 }
 
-/** Lift very deep colours on dark grounds (navy on graphite) and deepen very pale ones on light grounds. */
+/** Lift very deep colours on dark grounds (dark grey on graphite) and deepen very pale ones on light grounds. */
 export function legible(c: string, mode: 'dark' | 'light'): string {
   const L = luminance(c);
   if (mode === 'dark' && L < 0.09) return mix(c, '#ffffff', Math.min(0.55, (0.09 - L) * 6 + 0.3));

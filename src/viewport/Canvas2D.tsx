@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 /**
  * 2D views: every part flat ("Flat parts") or nested on sheets ("Sheets").
  * Drawn with Canvas 2D from the same geometry the exporters use. Pan with

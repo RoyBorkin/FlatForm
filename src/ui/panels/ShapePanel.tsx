@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 import { useRef, useState } from 'react';
 import { Plus, Trash2, Upload, Wand2, Eraser, Hand, Paintbrush, CircleDot, Minus, Waves, ArrowDownToLine } from 'lucide-react';
 import { useProject } from '@/state/project';

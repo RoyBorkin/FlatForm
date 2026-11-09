@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 /** Deterministic, seedable PRNG (mulberry32). Same seed → same parts, always. */
 export function rng(seed: number) {
   let a = (seed >>> 0) || 0x9e3779b9;

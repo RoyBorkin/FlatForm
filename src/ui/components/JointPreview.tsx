@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 import { useMemo } from 'react';
 import type { Path2 } from '@/core/types';
 import { emptyFeatures, type EdgeCtx, type Features } from '@/core/joinery/edgeFeatures';

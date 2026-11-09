@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 import { useRef, useState, type PointerEvent as RPointerEvent } from 'react';
 import { Plus, Minus } from 'lucide-react';
 import type { CurveParams } from '@/core/params';

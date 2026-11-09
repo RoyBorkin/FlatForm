@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 /**
  * Three interface worlds sharing one layout. Each world lends type, palette,
  * density and its own default part/layer colours; everything else is shared.
@@ -15,9 +15,9 @@ export interface World {
   preview: Record<Mode, [string, string, string, string]>;
 }
 
-/** The FlatForm palette: signal red, deep navy, amber, and tints of each for extra groups. */
-export const PALETTE = { red: '#ee4036', navy: '#262261', amber: '#faaf40' } as const;
-const PALETTE_LAYERS = ['#ee4036', '#262261', '#faaf40', '#f4837b', '#5d59a3', '#fcd08a', '#a82a22', '#c47d17'];
+/** The FlatForm palette: orange-red, amber yellow and dark grey, plus tints of each for extra groups. */
+export const PALETTE = { red: '#ee4036', amber: '#faaf40', grey: '#262626' } as const;
+const PALETTE_LAYERS = ['#ee4036', '#262626', '#faaf40', '#f4837b', '#6b6b6b', '#fcd08a', '#a82a22', '#c47d17'];
 
 export const WORLDS: World[] = [
   {

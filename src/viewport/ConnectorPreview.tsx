@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Bounds, useBounds } from '@react-three/drei';
 import { useEffect, useMemo, useState } from 'react';
@@ -26,7 +26,7 @@ export default function ConnectorPreview() {
     const id = setTimeout(async () => {
       try {
         const r = await geometry().connectors(
-          { kind: j.printed.connector, printed: j.printed, thickness: t, layers: method === 'lattice' ? layers : 1, stripWidth },
+          { kind: method === 'layers' && data?.spacers?.length ? 'spacer' : j.printed.connector, printed: j.printed, thickness: t, layers: method === 'lattice' ? layers : 1, stripWidth },
           data ? { ...data, hubs: data.hubs?.slice(0, 1), bracketAngles: data.bracketAngles?.slice(0, 50) } : undefined,
           1,
         );

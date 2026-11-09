@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 import { useUI, type StepId } from '@/state/ui';
 import { ShapePanel } from '../panels/ShapePanel';
 import { SurfacePanel } from '../panels/SurfacePanel';

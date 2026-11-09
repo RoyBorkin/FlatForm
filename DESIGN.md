@@ -1,4 +1,4 @@
-<!-- FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT -->
+<!-- FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved -->
 # Design
 
 FlatForm is a working tool (Operate mode): people spend long sessions tuning parameters. The layout is fixed and familiar. A "world" lends the interface its type, palette, density and one signature detail. Three worlds ship, each in dark and light. Users switch between them in Settings; the components never change.
@@ -25,9 +25,9 @@ The light modes are museum board `#e4e1db`, tissue `#e8e2d3` and drafting film `
 
 ## Brand palette, part and layer colours
 
-The FlatForm palette is signal red `#ee4036`, deep navy `#262261` and amber `#faaf40`. The mark is a flat red facet folding into an amber one on a navy tile (`src/ui/components/LogoMark.tsx`, `docs/app-icon.svg`).
+The FlatForm palette is orange-red `#ee4036`, amber yellow `#faaf40` and dark grey `#262626`. The mark is two layers of branching strips, amber and red, pinned at their nodes on a dark grey tile (`src/ui/components/LogoMark.tsx`, `docs/app-icon.svg`).
 
-Every world defaults its part and layer colours to the palette and its tints (`PALETTE_LAYERS` in `src/themes/themes.ts`): A red, B navy, C amber, then lighter and deeper versions. Users can edit them per world. Navy is too deep to read on a graphite ground, so `themes/legible.ts` lifts very dark colours toward white in dark mode (and deepens very pale ones in light mode) before they reach `--layer-n` and the viewport; the stored colour is unchanged.
+Every world defaults its part and layer colours to the palette and its tints (`PALETTE_LAYERS` in `src/themes/themes.ts`): A red, B dark grey, C amber, then lighter and deeper versions. Users can edit them per world. Dark grey is too deep to read on a graphite ground, so `themes/legible.ts` lifts very dark colours toward white in dark mode (and deepens very pale ones in light mode) before they reach `--layer-n` and the viewport; the stored colour is unchanged.
 
 ## Method picker
 

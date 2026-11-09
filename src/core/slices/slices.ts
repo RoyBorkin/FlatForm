@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 /** Stacked slices: contour sections stacked along one axis, aligned on dowels. */
 import type { MeshData, MethodResult, Part2D, Path2, Polyline2 } from '../types';
 import type { JoineryParams, MaterialParams, SlicesParams } from '../params';

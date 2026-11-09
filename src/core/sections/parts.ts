@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 /** Turn finished section regions into labelled, positioned parts. */
 import type { Circle2, Part2D, Path2, Polyline2 } from '../types';
 import { interiorPoint, pointInRegion, splitIslands } from '../polygon/polygon';

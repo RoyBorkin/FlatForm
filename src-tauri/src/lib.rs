@@ -1,4 +1,4 @@
-// FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT
+// FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved
 //! FlatForm desktop shell. All geometry runs in the web front end (WASM and
 //! Web Workers); the native side only provides file dialogs and file access.
 

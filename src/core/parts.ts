@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 import type { Part2D, Path2 } from './types';
 import { bounds, minAreaRectAngle, regionArea, signedArea } from './polygon/polygon';
 import { mulM4, type M4, type V2 } from './math/vec';

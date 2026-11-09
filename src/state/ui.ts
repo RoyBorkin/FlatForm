@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 import { useMemo } from 'react';
 import { legible } from '@/themes/legible';
 import { create } from 'zustand';
@@ -20,7 +20,7 @@ export interface Settings {
   autoCompute: boolean;
 }
 
-const SETTINGS_KEY = 'flatform.settings.v2';
+const SETTINGS_KEY = 'flatform.settings.v3';
 
 export const defaultSettings = (): Settings => ({
   world: 'modelshop',

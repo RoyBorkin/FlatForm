@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 import ClipperLib, { type PolyNode } from 'clipper-lib';
 import type { Path2 } from '../types';
 import type { V2 } from '../math/vec';

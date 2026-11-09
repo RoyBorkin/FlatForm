@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 /**
  * Flaticulation (Fang, Chan & Cheng, UIST '22): T-patterns on the shared
  * edge of two pieces cut in place, so they clutch together when folded to a

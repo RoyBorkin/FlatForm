@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 /** Map the project's joinery choice onto seam features (both sides of a cut edge). */
 import type { JoineryParams } from '../params';
 import { fingers, glueFlap, holeRow, latches, wireStitches, type EdgeCtx, type Features } from './edgeFeatures';

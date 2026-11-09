@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 /**
  * The unfold-based methods that share the engine in unfold.ts:
  *  - paper-craft: Pepakura-style pieces with glue flaps and fold lines,

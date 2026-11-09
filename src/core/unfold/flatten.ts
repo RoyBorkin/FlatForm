@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 /**
  * Stretch-tolerant flattening for flexible materials (fabric, felt, leather,
  * thin plastic). Each disc-shaped chart is flattened in one piece with least

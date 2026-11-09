@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 import { FUTURAL } from './hersheyFuturalData';
 import type { Polyline2 } from '../types';
 import type { V2 } from '../math/vec';

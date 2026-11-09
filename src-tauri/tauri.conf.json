@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "FlatForm",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "identifier": "app.flatform.desktop",
   "build": {
     "frontendDist": "../dist",
@@ -29,14 +29,32 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["msi", "nsis", "dmg", "app"],
+    "targets": [
+      "msi",
+      "nsis",
+      "dmg",
+      "app"
+    ],
     "category": "DeveloperTool",
     "shortDescription": "Turn 3D shapes into flat sheet parts",
-    "longDescription": "FlatForm turns any 3D shape into flat parts you can laser-cut or CNC-cut from sheet material, with numbered holes, joinery, nesting and DXF/SVG/PDF export.",
-    "copyright": "© 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT",
+    "longDescription": "FlatForm turns any 3D shape into flat parts you can laser-cut, CNC-route or 3D-print from sheet material, with joinery, numbering, nesting and DXF/SVG/PDF/STL/3MF export.",
+    "copyright": "© 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved",
     "publisher": "Roy Borkin",
-    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
-    "macOS": { "minimumSystemVersion": "11.0" },
-    "windows": { "webviewInstallMode": { "type": "downloadBootstrapper" } }
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "macOS": {
+      "minimumSystemVersion": "11.0",
+      "signingIdentity": "-"
+    },
+    "windows": {
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper"
+      }
+    }
   }
 }

@@ -1,6 +1,6 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 import { COPYRIGHT_LINE } from '@/brand';
-import { effectiveSheet } from '@/core/manufacturing/manufacturing';
+import { effectiveSheet, estimate } from '@/core/manufacturing/manufacturing';
 import { useTasks, withTask } from '@/state/tasks';
 /**
  * Every export the app offers, each a small function from current state to a
@@ -195,6 +195,7 @@ export const exporters = {
         area_mm2: +pt.area.toFixed(1),
         cut_length_mm: +cutLength(pt).toFixed(1),
         holes: pt.holes.length,
+        weight_g: +estimate([pt], p).weight.toFixed(1),
         sheet: where.get(pt.id)?.sheet ?? '',
         x_mm: where.has(pt.id) ? +where.get(pt.id)!.x.toFixed(2) : '',
         y_mm: where.has(pt.id) ? +where.get(pt.id)!.y.toFixed(2) : '',
@@ -206,13 +207,17 @@ export const exporters = {
         project: p.name,
         method: p.method,
         material: p.material.name,
+        density_kg_m3: p.material.density,
         thickness_mm: p.material.thickness,
-        sheet_mm: [p.sheet.width, p.sheet.height],
+        sheet_mm: [effectiveSheet(p).width, effectiveSheet(p).height],
         parts: rows.length,
         sheets: nest.sheets.length,
         sheet_utilisation: nest.sheets.map((s) => +s.utilisation.toFixed(3)),
         total_cut_length_m: +(totalCut / 1000).toFixed(2),
-        est_cut_minutes: +(totalCut / p.material.cutSpeed / 60).toFixed(1),
+        process: p.manufacturing.process,
+        est_machine_minutes: +estimate(method.parts, p).minutes.toFixed(1),
+        est_weight_g: +estimate(method.parts, p).weight.toFixed(0),
+        copyright: COPYRIGHT_LINE,
         est_material_cost: +(nest.sheets.length * p.material.pricePerSheet).toFixed(2),
         hole_diameter_mm: pinHoleDiameter(p.joinery),
         connectors: method.connectorData?.pinCount ?? 0,

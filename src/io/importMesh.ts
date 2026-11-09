@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 /**
  * Import a 3D file into a welded triangle mesh (mm, Z up).
  * STL, OBJ, PLY, GLB/GLTF and Rhino 3DM are supported.

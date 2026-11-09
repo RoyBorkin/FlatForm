@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 /**
  * Rhino .3dm import via rhino3dm (WASM, loaded only when needed). Meshes and
  * the render meshes of Breps, Extrusions and SubDs are used; save the file

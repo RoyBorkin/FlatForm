@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 import { useMemo } from 'react';
 import { useResults } from '@/state/results';
 import { useProject } from '@/state/project';
@@ -24,7 +24,7 @@ export function StatusBar() {
       <dl className="status__stats">
         <Stat k="Triangles" v={tris.toLocaleString()} />
         <Stat k="Parts" v={stats.parts.toLocaleString()} />
-        {stats.pins > 0 && <Stat k={p.method === 'slices' ? 'Dowels' : 'Pins'} v={stats.pins.toLocaleString()} />}
+        {stats.pins > 0 && <Stat k={p.method === 'slices' ? 'Dowels' : p.method === 'layers' ? 'Rods' : p.method === 'meshlines' ? 'Nodes' : 'Pins'} v={stats.pins.toLocaleString()} />}
         <Stat k={process === 'print3d' ? 'Plates' : 'Sheets'} v={String(stats.sheets)} />
         {process !== 'print3d' && <Stat k="Cut length" v={stats.cut > 10000 ? `${(stats.cut / 1000).toFixed(1)} m` : u.fmt(stats.cut, 0)} />}
         <Stat k={process === 'print3d' ? 'Print time' : process === 'cnc' ? 'Router time' : 'Cut time'} v={`≈ ${stats.minutes < 60 ? `${Math.round(stats.minutes)} min` : `${(stats.minutes / 60).toFixed(1)} h`}`} />

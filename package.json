@@ -1,26 +1,28 @@
 {
   "name": "flatform",
   "private": true,
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "Turn any 3D shape into flat sheet parts you can laser-cut, CNC-route or 3D-print, number and assemble.",
   "author": {
     "name": "Roy Borkin",
     "email": "royborkin@gmail.com",
     "url": "https://royborkin.github.io/"
   },
-  "homepage": "https://royborkin.github.io/",
+  "homepage": "https://royborkin.github.io/FlatForm/",
   "type": "module",
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "node scripts/notices.mjs && tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "tauri": "tauri",
     "desktop:dev": "tauri dev",
-    "desktop:build": "tauri build"
+    "desktop:build": "tauri build",
+    "notices": "node scripts/notices.mjs",
+    "version:set": "node scripts/set-version.mjs"
   },
   "dependencies": {
     "@fontsource-variable/archivo": "^5.3.0",
@@ -80,5 +82,9 @@
     "parametric",
     "three.js",
     "tauri"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/royborkin/FlatForm.git"
+  }
 }

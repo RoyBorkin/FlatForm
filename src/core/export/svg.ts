@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 /**
  * SVG at 1:1 scale (mm). Layers are groups named for Inkscape/Illustrator and
  * coloured the way LightBurn and most laser software map operations:

@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 import { APP_NAME, AUTHOR, AUTHOR_EMAIL, AUTHOR_URL, COPYRIGHT, COPYRIGHT_LINE } from '@/brand';
 /** 3D exports: STL (binary), OBJ, GLB and 3MF. Z is up, units are mm. */
 import { BufferGeometry, Group, Matrix4, Mesh, MeshStandardMaterial, Object3D } from 'three';

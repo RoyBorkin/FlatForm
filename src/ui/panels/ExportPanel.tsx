@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 import { Box, FileCode2, FileText, Layers, Package, Printer, Scissors, Shapes, Table2, Archive, BookOpen, Save } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useProject } from '@/state/project';

@@ -1,4 +1,4 @@
-<!-- FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT -->
+<!-- FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved -->
 # Product
 
 <!-- impeccable:product-schema 1 -->
@@ -19,7 +19,7 @@ Designers, makers, architects and computational-design students who want to turn
 
 Take a 3D object (modelled in the app or imported) and rebuild it from flat 2D sheet parts, as in the reference "From Organic Shape to Fabrication" pipeline. Export the assembled 3D model, the flat parts, a ready-to-cut DXF, an assembly guide, a parts list, the original model, and printable connectors. Success: a file a laser or CNC cutter can cut (or a plate a printer can print) without cleanup, and parts that go back together.
 
-Author: Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/. The name is FlatForm; the brand palette is red #ee4036, navy #262261 and amber #faaf40.
+Author: Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/. The name is FlatForm; the brand palette is orange-red #ee4036, amber #faaf40 and dark grey #262626.
 
 ## Positioning
 

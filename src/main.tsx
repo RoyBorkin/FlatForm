@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import '@fontsource-variable/hanken-grotesk';
@@ -15,9 +15,15 @@ import './styles/layout.css';
 import './styles/components.css';
 import './styles/panels.css';
 import { App } from './App';
+import { ErrorBoundary } from './ui/ErrorBoundary';
+
+// Tell the boot guard in index.html that the app scripts loaded.
+window.__flatformStarted?.();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </StrictMode>,
 );

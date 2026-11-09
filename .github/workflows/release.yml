@@ -1,11 +1,12 @@
-# FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT
+# FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved
 name: Desktop release
 
-# Push a tag like v0.2.0 to build Windows and macOS installers
+# Push a tag like v1.0.0 to build Windows and macOS installers
 # and attach them to a draft GitHub release.
 on:
   push:
     tags: ['v*']
+  # Or run it by hand from the Actions tab: the tag is made from the app version.
   workflow_dispatch:
 
 permissions:
@@ -42,9 +43,17 @@ jobs:
           # APPLE_CERTIFICATE, APPLE_CERTIFICATE_PASSWORD, APPLE_SIGNING_IDENTITY,
           # APPLE_ID, APPLE_PASSWORD, APPLE_TEAM_ID
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: 'FlatForm ${{ github.ref_name }}'
-          releaseBody: 'Windows (.msi / .exe) and macOS (.dmg, universal) builds. See the README for install notes.'
+          # v__VERSION__ is replaced with the version in src-tauri/tauri.conf.json.
+          tagName: v__VERSION__
+          releaseName: 'FlatForm v__VERSION__'
+          releaseBody: |
+            **Windows**: download the `.msi` (or the `-setup.exe`) and run it. The installers are not code-signed, so Windows SmartScreen may say "Windows protected your PC": click **More info → Run anyway**.
+
+            **macOS** (Apple silicon and Intel, macOS 11+): download the `.dmg`, open it and drag FlatForm to Applications. The app is not notarised, so the first time, right-click (Control-click) FlatForm in Applications and choose **Open**, then **Open** again. On macOS 15 and later use **System Settings → Privacy & Security → Open Anyway**.
+
+            Web version: https://royborkin.github.io/FlatForm/
+
+            © 2026 Roy Borkin · All rights reserved.
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}

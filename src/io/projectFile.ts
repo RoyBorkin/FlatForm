@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 import { COPYRIGHT_LINE } from '@/brand';
 /** .flatform project files: the parameters plus any imported/sculpted mesh. */
 import type { ProjectParams } from '@/core/params';

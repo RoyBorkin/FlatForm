@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 import { useProject } from '@/state/project';
 import type { ClassicParams, CurveParams, LayersParams } from '@/core/params';
 import { Section, SegmentedField, SliderField, SwitchField } from '../../components/controls';

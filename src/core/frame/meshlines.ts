@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 /**
  * Mesh lines: every edge of a (remeshed) surface becomes a flat bar. Bars
  * stand on edge (radial, like the matchstick lattice) or lie flat in the

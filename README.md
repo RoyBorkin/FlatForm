@@ -1,4 +1,4 @@
-<!-- FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT -->
+<!-- FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved -->
 <p align="center">
   <img src="docs/app-icon.png" width="96" alt="" />
 </p>
@@ -11,7 +11,12 @@
 </p>
 
 <p align="center">
-  © 2026 <a href="https://royborkin.github.io/">Roy Borkin</a> · <a href="mailto:royborkin@gmail.com">royborkin@gmail.com</a>
+  <a href="https://royborkin.github.io/FlatForm/"><b>Open the web app</b></a> ·
+  <a href="https://github.com/royborkin/FlatForm/releases/latest"><b>Download for Windows / macOS</b></a>
+</p>
+
+<p align="center">
+  © 2026 <a href="https://royborkin.github.io/">Roy Borkin</a> · <a href="mailto:royborkin@gmail.com">royborkin@gmail.com</a> · All rights reserved
 </p>
 
 <p align="center">
@@ -88,7 +93,7 @@ Every joinery panel shows a live preview drawn by the same code that cuts the pa
 **Interface**
 - The left rail follows the build order and shows each step's live result. The status bar shows parts, pins, sheets, cut length, cut time and material cost.
 - Click a part in 3D, in the flat view or on a sheet, and it is selected in every view.
-- **Three looks**: *Model shop*, *Pattern tissue* and *Drafting*, each in dark and light. Part and layer colours default to the FlatForm palette (red `#ee4036`, navy `#262261`, amber `#faaf40` and their tints) and can be changed per look in Settings; very deep colours are lifted automatically on dark grounds.
+- **Three looks**: *Model shop*, *Pattern tissue* and *Drafting*, each in dark and light. Part and layer colours default to the FlatForm palette (orange-red `#ee4036`, amber `#faaf40`, dark grey `#262626` and their tints) and can be changed per look in Settings; very deep colours are lifted automatically on dark grounds.
 - Units: **mm, cm, m or inches**, shown and typed everywhere (files stay in millimetres).
 - A splash while the app loads, and a progress card for anything slow: recomputes, exports, connectors and the guide.
 - Undo/redo for every change, and autosave.
@@ -113,9 +118,12 @@ npm run build      # static site in dist/
 npm run preview    # serve the production build
 npm test           # geometry tests (Vitest)
 npm run typecheck
+npm run notices    # refresh public/THIRD-PARTY-NOTICES.txt (also runs on build)
 ```
 
-The build is a static site with relative paths, so `dist/` can be hosted anywhere. Pushing to `main` deploys it to **GitHub Pages** through `.github/workflows/pages.yml`. To turn this on, go to *Settings → Pages* in the repository and set *Source: GitHub Actions*.
+The build is a static site with relative paths, so `dist/` can be hosted anywhere. Pushing to `main` deploys it to **GitHub Pages** at <https://royborkin.github.io/FlatForm/> through `.github/workflows/pages.yml`. In the repository, *Settings → Pages → Source* must be **GitHub Actions** (with *Deploy from a branch*, Pages serves the raw source and the app cannot start).
+
+**Step-by-step upload, Pages and release instructions: [docs/PUBLISHING.md](docs/PUBLISHING.md).**
 
 ## Desktop app (Windows & macOS)
 
@@ -130,7 +138,7 @@ npm run desktop:build   # build an installer for the current OS
 
 Output goes to `src-tauri/target/release/bundle/` (`.msi` and `.exe` on Windows, `.dmg` and `.app` on macOS).
 
-**Automated releases**: push a tag such as `v0.2.0`. `.github/workflows/release.yml` then builds Windows installers and a universal macOS `.dmg`, and attaches them to a draft GitHub release. Builds are unsigned by default. To sign and notarise on macOS, add the `APPLE_*` secrets listed in the workflow.
+**Automated releases**: run `npm run version:set 1.1.0`, commit, push, then push the tag `v1.1.0` (or run *Desktop release* from the Actions tab). `.github/workflows/release.yml` builds Windows installers (`.msi`, `-setup.exe`) and a universal macOS `.dmg` (Apple silicon + Intel) and attaches them to a draft release for you to publish. Builds are not code-signed: macOS builds are ad-hoc signed so they open via *Open Anyway*, and Windows shows a SmartScreen prompt (*More info → Run anyway*). Signing can be added later with the `APPLE_*` secrets listed in the workflow. Full walkthrough in [docs/PUBLISHING.md](docs/PUBLISHING.md).
 
 ## How the lattice works
 
@@ -207,6 +215,8 @@ Vite · React 19 · TypeScript · Three.js / React Three Fiber · Zustand + zund
 
 ## Licence
 
-MIT. See [LICENSE](LICENSE). © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/
+**All rights reserved.** © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/
+
+The source is public so you can read it, but no licence is granted to copy, modify or redistribute it. You may use the official web app and release builds. See [LICENSE](LICENSE). Bundled open-source components keep their own licences; see [THIRD-PARTY-NOTICES.txt](public/THIRD-PARTY-NOTICES.txt).
 
 Acknowledgements: Zheng, Li and Mueller, *Flaticulation: Laser Cutting Joints with Articulated Angles* (UIST 2022); Park et al., *FoolProofJoint* (CHI 2022); Lévy et al., *Least Squares Conformal Maps* (SIGGRAPH 2002); the Hershey fonts (public domain), [Clipper](https://www.angusj.com/clipper2/), [Manifold](https://github.com/elalish/manifold), [three.js](https://threejs.org), [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh), and the computational design community whose Grasshopper workflows inspired this tool.

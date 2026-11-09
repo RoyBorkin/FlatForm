@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 /** One PDF page per sheet at 1:1 scale, same layers and colours as the SVG. */
 import { jsPDF } from 'jspdf';
 import { APP_NAME, AUTHOR, AUTHOR_EMAIL, COPYRIGHT_LINE } from '@/brand';

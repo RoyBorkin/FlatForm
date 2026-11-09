@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT -->
+<!-- FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -57,6 +57,40 @@
         font-size: 12px;
         opacity: 0.66;
       }
+      #boot .boot__error {
+        display: none;
+        max-width: 440px;
+        padding: 0 24px;
+        text-align: center;
+      }
+      #boot[data-state='error'] .boot__error {
+        display: grid;
+        gap: 8px;
+      }
+      #boot[data-state='error'] .boot__bar,
+      #boot[data-state='error'] .boot__stage {
+        display: none;
+      }
+      #boot .boot__error strong {
+        font-size: 15px;
+      }
+      #boot .boot__error code {
+        font: 12px/1.4 ui-monospace, Menlo, Consolas, monospace;
+        opacity: 0.7;
+        word-break: break-all;
+      }
+      #boot .boot__error button {
+        justify-self: center;
+        margin-top: 6px;
+        padding: 7px 16px;
+        border: 0;
+        border-radius: 6px;
+        background: #faaf40;
+        color: #1f1f1f;
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
       #boot .boot__copy {
         position: absolute;
         bottom: 18px;
@@ -104,20 +138,92 @@
   <body>
     <div id="boot" role="status" aria-label="Loading FlatForm">
       <div class="boot__inner">
-        <svg width="64" height="64" viewBox="0 0 64 64" aria-hidden="true">
-          <rect width="64" height="64" rx="15" fill="#262261" />
-          <path d="M11 47 L30 15 L35 51 Z" fill="#ee4036" />
-          <path d="M30 15 L54 37 L35 51 Z" fill="#faaf40" />
-          <path d="M30 15 L35 51" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="3.2 3" />
-          <circle cx="30" cy="15" r="3.6" fill="#fff" />
+        <svg width="72" height="72" viewBox="0 0 1024 1024" aria-hidden="true">
+          <rect width="1024" height="1024" rx="228" fill="#262626" />
+          <rect x="40" y="40" width="944" height="944" rx="196" fill="none" stroke="#3d3d3d" stroke-width="8" />
+          <g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="64">
+            <path d="M232 700 L392 520 L392 330 M392 520 L560 590 L700 430 L700 250 M700 430 L820 500" stroke="#faaf40" />
+            <path d="M240 380 L430 450 L540 330 M430 450 L470 760 L660 790 M660 790 L800 690" stroke="#ee4036" />
+          </g>
+          <g fill="#f4f1ec">
+            <circle cx="392" cy="520" r="30" /><circle cx="700" cy="430" r="30" /><circle cx="430" cy="450" r="30" /><circle cx="660" cy="790" r="30" />
+          </g>
         </svg>
         <div class="boot__name">FlatForm</div>
         <div class="boot__bar"><span></span></div>
         <div class="boot__stage" id="boot-stage">Loading</div>
+        <div class="boot__error">
+          <strong id="boot-error-title"></strong>
+          <code id="boot-error-detail"></code>
+          <span id="boot-error-hint"></span>
+          <button type="button" id="boot-reload">Reload</button>
+        </div>
       </div>
       <div class="boot__copy">© 2026 Roy Borkin · royborkin.github.io</div>
     </div>
     <div id="root"></div>
+    <script>
+      /* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
+      /*
+       * Boot guard. Runs before the app's module scripts. If they fail to load or
+       * crash before the interface appears, the splash explains what happened
+       * instead of spinning forever.
+       */
+      (function () {
+        var started = false;
+        window.__flatformStarted = function () {
+          started = true;
+        };
+
+        function show(title, detail, hint) {
+          var boot = document.getElementById('boot');
+          if (!boot) return;
+          boot.setAttribute('data-state', 'error');
+          boot.setAttribute('role', 'alert');
+          var t = document.getElementById('boot-error-title');
+          var d = document.getElementById('boot-error-detail');
+          var h = document.getElementById('boot-error-hint');
+          if (t) t.textContent = title;
+          if (d) d.textContent = detail || '';
+          if (h) h.textContent = hint || '';
+        }
+        window.__flatformFail = show;
+        document.addEventListener('click', function (e) {
+          if (e.target && e.target.id === 'boot-reload') location.reload();
+        });
+
+        // Script and module load failures do not bubble, so listen in the capture phase.
+        window.addEventListener(
+          'error',
+          function (e) {
+            var el = e.target;
+            if (el && el.tagName === 'SCRIPT') {
+              var src = el.src || el.getAttribute('src') || '';
+              if (/\/src\/main\.tsx/.test(src)) {
+                show(
+                  'This page is the source code, not the built app.',
+                  'GitHub Pages is publishing the repository files directly.',
+                  'In the repository open Settings → Pages and set Source to “GitHub Actions”. The “Deploy web app to GitHub Pages” workflow then builds FlatForm and publishes it.'
+                );
+              } else if (!started) {
+                show('Part of FlatForm could not be downloaded.', src, 'Check your connection and reload. If it keeps happening, the site may still be deploying: wait a minute and reload.');
+              }
+              return;
+            }
+            if (!started && e.message) show('FlatForm could not start.', e.message, 'Reload the page. If it keeps happening, try another browser (Chrome, Edge, Firefox or Safari 16.4+).');
+          },
+          true
+        );
+        window.addEventListener('unhandledrejection', function (e) {
+          if (started) return;
+          var r = e.reason;
+          show('FlatForm could not start.', (r && (r.message || String(r))) || '', 'Reload the page. If it keeps happening, try another browser.');
+        });
+        setTimeout(function () {
+          if (!started) show('FlatForm is taking too long to start.', 'The app scripts have not run after 40 seconds.', 'Reload the page. On GitHub Pages, make sure Settings → Pages → Source is “GitHub Actions” and the latest deploy finished.');
+        }, 40000);
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

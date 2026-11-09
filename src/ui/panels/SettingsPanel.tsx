@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 import { RotateCcw, Moon, Sun, Monitor } from 'lucide-react';
 import { useProject } from '@/state/project';
 import { useUI } from '@/state/ui';
@@ -121,7 +121,13 @@ export function SettingsPanel() {
               {AUTHOR_URL.replace(/^https:\/\//, '').replace(/\/$/, '')}
             </a>
           </p>
-          <p className="muted small">MIT licence. Geometry runs locally on your machine; nothing is uploaded.</p>
+          <p className="muted small">
+            All rights reserved. Geometry runs locally on your machine; nothing is uploaded. Built with open-source components:{' '}
+            <a href="./THIRD-PARTY-NOTICES.txt" target="_blank" rel="noreferrer">
+              notices
+            </a>
+            .
+          </p>
         </div>
         <p className="muted small">Shortcuts: Ctrl/⌘ Z undo, Ctrl/⌘ Shift Z redo, Ctrl/⌘ S save, Ctrl/⌘ O open, 1–7 jump to a step, F frame the view.</p>
       </Section>

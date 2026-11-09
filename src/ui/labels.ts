@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 /** Display names for methods and joinery, shared by the rail, panels and exports. */
 import type { JoineryKind, MethodKind, Process } from '@/core/params';
 

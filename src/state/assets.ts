@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 /**
  * Imported and sculpted meshes are big binary blobs, so they live outside the
  * undo history: in memory, in the worker, and in IndexedDB so a reload keeps

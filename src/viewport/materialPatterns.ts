@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 /**
  * Procedural sheet textures for the 2D views, so every sheet is drawn in the
  * stock it will be cut from: plywood grain, brushed metal, acrylic, card…

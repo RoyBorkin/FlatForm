@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 /**
  * Assembly guide PDF: cover render, how-to steps for the chosen method, every
  * sheet with its part labels, and a catalogue page for each part showing its
@@ -6,7 +6,7 @@
  */
 import { APP_NAME, AUTHOR, AUTHOR_EMAIL, AUTHOR_URL, COPYRIGHT, COPYRIGHT_LINE } from '@/brand';
 import { METHOD_NAME, PROCESS_LABEL } from '@/ui/labels';
-import { estimate } from '@/core/manufacturing/manufacturing';
+import { effectiveSheet, estimate } from '@/core/manufacturing/manufacturing';
 import { jsPDF } from 'jspdf';
 import {
   AmbientLight,
@@ -57,6 +57,46 @@ const STEPS: Record<string, string[]> = {
     'Fold along every fold line: solid score lines are mountain folds, dashed score lines are valley folds.',
     'Edges with the same number meet. Join each pair with its latch, glue tab, screws or printed bracket.',
     'Build outward from the largest part so the shape keeps its stiffness as it closes.',
+  ],
+  papercraft: [
+    'Print or cut every sheet. Solid outlines are cuts; dash-dot lines are mountain folds, dashed lines are valley folds.',
+    'Score every fold line lightly with a blunt point and a ruler, then pre-fold each piece.',
+    'Edges with the same number meet. Glue each flap under the matching edge; with lacing or latches, join them instead.',
+    'Start from the largest piece and close the shape last, from the inside where you can still reach.',
+  ],
+  minimal: [
+    'Cut every piece from felt, fabric, leather or thin plastic. Pieces are flattened in one go, so some stretch a little when they wrap the shape.',
+    'Seams with the same number meet. Line up the small ticks across each seam first.',
+    'Lace each seam through its holes or slots: cross stitches alternate sides; whip stitches wrap over the edge.',
+    'Close the largest seams first and finish with the short ones.',
+  ],
+  flexhinge: [
+    'Cut every piece. The bands of fine slits are living hinges: handle those areas gently until assembled.',
+    'Flex each hinge band slowly in the direction of the bend. Warming MDF or plywood slightly helps.',
+    'Seams with the same number meet. Join them with lacing, finger joints, latches or screws as chosen.',
+    'Close the shape last, easing the hinges into their final curve.',
+  ],
+  layers: [
+    'Cut every layer. Layers are numbered in order along the stack or the curve.',
+    'Slide layer 1 onto the rods (or the spine), then a printed spacer on every rod, then layer 2, and so on.',
+    'The engraved circles mark where each spacer sits; the engraved outline shows the next layer.',
+    'Tighten the rod ends once every layer is on. Curved stacks use a bendable rod or wire along the spine.',
+  ],
+  meshlines: [
+    'Cut every bar. Each bar carries its length type and number; the holes at the ends are labelled with node numbers.',
+    'Bars that share a node number meet at that node. Join them with a bolt, lashing or a printed node hub.',
+    'Build one ring of triangles first, then grow outward; the frame becomes rigid as each triangle closes.',
+  ],
+  triangles: [
+    'Cut every panel. Panels of the same type (T1, T2, …) are identical, so you can cut them in batches.',
+    'Edges with the same number meet. Join them with lacing, finger joints, screws or printed connectors.',
+    'Start from one panel and add neighbours around it; check each panel’s edge numbers against its neighbours.',
+  ],
+  classic: [
+    'Cut every sheet. Each slot is labelled with the part that slides into it.',
+    'Every pair of parts slides together in one direction: one slot from each side, meeting in the middle.',
+    'Revolved models: stand the rings on their profiles, then slide each profile in from the outside. Curved models: thread the ribs onto the spine in order.',
+    'Do not force a slot. If it is tight, increase the fit clearance and cut again.',
   ],
 };
 
@@ -229,10 +269,10 @@ export async function buildAssemblyGuide(onProgress?: (f: number) => void): Prom
     ['Making', PROCESS_LABEL[p.manufacturing.process]],
     ['Material', `${p.material.name}`],
     ['Thickness', `${p.material.thickness} mm`],
-    ['Sheet', `${p.sheet.width} × ${p.sheet.height} mm`],
+    [p.manufacturing.process === 'print3d' ? 'Print bed' : 'Sheet', `${effectiveSheet(p).width} × ${effectiveSheet(p).height} mm`],
     ['Sheets', String(r.nest.sheets.length)],
     ['Parts', String(method.parts.length)],
-    ['Hole diameter', pinHoleDiameter(p.joinery) ? `${pinHoleDiameter(p.joinery).toFixed(2)} mm` : '—'],
+    ['Hole diameter', pinHoleDiameter(p.joinery) && method.parts.some((x) => x.holes.length) ? `${pinHoleDiameter(p.joinery).toFixed(2)} mm` : '—'],
     ['Connectors', String(method.connectorData?.pinCount ?? 0)],
     ['Total cut length', `${(totalCut / 1000).toFixed(1)} m`],
     ['Weight', (() => {
@@ -269,7 +309,7 @@ export async function buildAssemblyGuide(onProgress?: (f: number) => void): Prom
   });
 
   // --- sheets
-  const drawings = sheetDrawings(r.nest, r.partIndex, p.sheet, 0);
+  const drawings = sheetDrawings(r.nest, r.partIndex, effectiveSheet(p), 0);
   for (const s of drawings) {
     doc.addPage();
     doc.setFont('helvetica', 'bold');

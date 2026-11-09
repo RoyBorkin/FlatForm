@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 /**
  * DXF R12 (AC1009) writer. R12 is the most widely accepted dialect: laser
  * software (LightBurn, RDWorks, Trotec), CNC CAM and every CAD package read it.

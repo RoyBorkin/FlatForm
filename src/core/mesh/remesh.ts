@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 /**
  * Isotropic remeshing (after Botsch & Kobbelt 2004), written as a sequence of
  * whole-mesh passes on an indexed mesh. Each pass rebuilds adjacency, which

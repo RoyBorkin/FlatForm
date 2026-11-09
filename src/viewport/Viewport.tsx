@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 import { lazy, Suspense } from 'react';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useUI, useLayerColors, type Overlays } from '@/state/ui';

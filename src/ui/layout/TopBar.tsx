@@ -1,4 +1,4 @@
-/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · MIT */
+/* FlatForm — © 2026 Roy Borkin · royborkin@gmail.com · https://royborkin.github.io/ · All rights reserved */
 import { LogoMark } from '../components/LogoMark';
 import { Box, Download, Grid2x2, LayoutPanelTop, Redo2, Undo2, FolderOpen, Save } from 'lucide-react';
 import { useStore } from 'zustand';
